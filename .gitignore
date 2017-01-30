@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# ZIP
+*.zip
+
+# Corpora
+Corpus_FAPESP_pt-en_bitexts
+MNIST_data
