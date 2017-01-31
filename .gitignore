@@ -94,3 +94,6 @@ ENV/
 # Corpora
 Corpus_FAPESP_pt-en_bitexts
 MNIST_data
+
+# Pycharm
+.idea
