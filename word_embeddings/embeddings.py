@@ -7,8 +7,8 @@ import collections
 import random
 
 vocabulary_size = 50000
-embedding_size = 10
-batch_size = 100
+embedding_size = 100
+batch_size = 3
 num_sampled = 1000
 
 
@@ -64,15 +64,16 @@ def cria_batch(tam_batch, num_skips, skip_window):
     batch = np.ndarray(shape=tam_batch, dtype=np.int32)
     labels = np.ndarray(shape=(tam_batch, 1), dtype=np.int32)
 
-    span = 2 * skip_window + 1
+    span = 2 * skip_window + 1 # [ skip_window palavra skip_window ]
     buff = collections.deque(maxlen=span)
-
+	
+# Preenche o buffer com os índices das palavras no vocabulário
     for _ in range(span):
         buff.append(data[data_index])
         data_index = (data_index + 1) % len(data)
 
-    print(buff)
-
+# Gera dados relacionados a cada centro do buffer
+# Escolhe como target num_skip palavras aleatórias dentro do contexto
     for i in range(tam_batch // num_skips):
         target = skip_window
         targets_to_avoid = [skip_window]
@@ -87,4 +88,7 @@ def cria_batch(tam_batch, num_skips, skip_window):
     return batch, labels
 
 
-print(cria_batch(4, 4, 2))
+batch, labels = cria_batch(tam_batch=8, num_skips=2, skip_window=2)
+for i in range(8):
+    print(batch[i], reverse_vocab[batch[i]],
+          '->', labels[i, 0], reverse_vocab[labels[i, 0]])
