@@ -97,3 +97,6 @@ MNIST_data
 
 # Pycharm
 .idea
+
+# Imagem
+*.png
