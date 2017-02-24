@@ -4,7 +4,7 @@
 https://github.com/hans/ipython-notebooks/blob/master/tf/TF%20tutorial.ipynb
 Para rodar:
 python linear_regression.py
-tensorboard --logdit caminho/para/diretorio/temp"""
+tensorboard --logdir caminho/para/diretorio/temp"""
 
 import numpy as np
 import tensorflow as tf
