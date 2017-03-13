@@ -3,7 +3,8 @@ import collections
 import numpy as np
 import tensorflow as tf
 import tempfile
-from tensorflow.python.ops import rnn_cell, seq2seq
+from tensorflow.contrib.legacy_seq2seq.python.ops import seq2seq
+from tensorflow.contrib.rnn.python.ops import rnn_cell
 
 
 # IDEA: Transformar em classe
@@ -68,7 +69,7 @@ prev_mem = tf.zeros((batch_size, memory_dim))
 print('Tensors criados')
 
 sess = tf.InteractiveSession()
-cell = rnn_cell.GRUCell(memory_dim)
+cell = tf.contrib.rnn.LSTMCell(memory_dim)
 dec_outputs, dec_memory = seq2seq.embedding_rnn_seq2seq(enc_inp, dec_inp, cell, vocab_size, vocab_size, embedding_dim)
 loss = seq2seq.sequence_loss(dec_outputs, labels, weights, vocab_size)
 print('Modelo criado')
@@ -109,10 +110,10 @@ for t in range(450):
 
 summary_writer.flush()
 
-saver = tf.train.Saver()
-saver.save(sess, 'modelo-encoder-decoder')
+saver = tf.train.Saver(tf.global_variables())
+saver.save(sess, 'tradutor/modelo-encoder-decoder')
 
-with open('vocab_pt', 'w') as file_pt:
+with open('tradutor/vocab_pt', 'w') as file_pt:
     file_pt.write('DATA\n')
     for word in data_pt:
         file_pt.write('{} '.format(word))
@@ -123,7 +124,7 @@ with open('vocab_pt', 'w') as file_pt:
     for i in rev_dict_pt.keys():
         file_pt.write("{}@@{}\n".format(i, rev_dict_pt[i]))
 
-with open('vocab_en', 'w') as file_en:
+with open('tradutor/vocab_en', 'w') as file_en:
     file_en.write('DATA\n')
     for word in data_en:
         file_en.write('{} '.format(word))
