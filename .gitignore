@@ -100,3 +100,11 @@ MNIST_data
 
 # Imagem
 *.png
+
+# Tradutor
+checkpoint
+*.data-00000-of-00001
+*.index
+*.meta
+vocab_en
+vocab_pt
