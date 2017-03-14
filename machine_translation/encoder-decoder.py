@@ -5,6 +5,7 @@ import tensorflow as tf
 import tempfile
 from tensorflow.contrib.legacy_seq2seq.python.ops import seq2seq
 from tensorflow.contrib.rnn.python.ops import rnn_cell
+import os
 
 
 # IDEA: Transformar em classe
@@ -110,6 +111,9 @@ for t in range(450):
 
 summary_writer.flush()
 
+if not os.path.exists('tradutor'):
+    os.mkdir('tradutor')
+
 saver = tf.train.Saver(tf.global_variables())
 saver.save(sess, 'tradutor/modelo-encoder-decoder')
 
@@ -117,7 +121,7 @@ with open('tradutor/vocab_pt', 'w') as file_pt:
     file_pt.write('DATA\n')
     for word in data_pt:
         file_pt.write('{} '.format(word))
-    file_pt.write('DICTIONARY\n')
+    file_pt.write('\nDICTIONARY\n')
     for i in dict_pt.keys():
         file_pt.write("{}@@{}\n".format(i, dict_pt[i]))
     file_pt.write('REVERSE_DICTIONARY\n')
@@ -128,7 +132,7 @@ with open('tradutor/vocab_en', 'w') as file_en:
     file_en.write('DATA\n')
     for word in data_en:
         file_en.write('{} '.format(word))
-    file_en.write('DICTIONARY\n')
+    file_en.write('\nDICTIONARY\n')
     for i in dict_en.keys():
         file_en.write("{}@@{}\n".format(i, dict_en[i]))
     file_en.write('REVERSE_DICTIONARY\n')
