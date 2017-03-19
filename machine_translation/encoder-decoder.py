@@ -9,7 +9,6 @@ import os
 import codecs
 import sys
 
-
 flags = tf.app.flags
 
 flags.DEFINE_string("save_path", None, "Diretório para salvar o modelo")
@@ -25,7 +24,6 @@ flags.DEFINE_float("learning_rate", 0.05, "Learning rate para treinamento")
 flags.DEFINE_float("momentum", 0.9, "Momentum para treinamento")
 flags.DEFINE_boolean("load_model", False, "Indica se o modelo precisa ser carregado de um arquivo")
 
-
 FLAGS = flags.FLAGS
 
 
@@ -33,7 +31,6 @@ class Options(object):
     """Opções do modelo do tradutor."""
 
     def __init__(self):
-
         # Opções para geração do vocabulário
         self.vocab_size = FLAGS.vocab_size
         self.path_pt = FLAGS.path_pt
@@ -62,11 +59,11 @@ class Tradutor(object):
         self._options = options
         self._session = session
 
-# TODO: Arrumar o carregamento do modelo, dicionário está vazio
+        # TODO: Arrumar o carregamento do modelo, dicionário está vazio
 
         if options.load_model:
-            self.data_pt, self.dict_pt, self.rev_dict_pt = self._recria_dataset(os.path.join(options.save_path, 'vocab_pt'))
-            self.data_en, self.dict_en, self.rev_dict_en = self._recria_dataset(os.path.join(options.save_path, 'vocab_en'))
+            self.data_pt, self.dict_pt, self.rev_dict_pt = self.recria_dataset(os.path.join(options.save_path, 'vocab_pt'))
+            self.data_en, self.dict_en, self.rev_dict_en = self.recria_dataset(os.path.join(options.save_path, 'vocab_en'))
             self.build_graph()
             print('Grafo criado')
             self.saver.restore(session, os.path.join(options.save_path, 'encoder-decoder.ckpt'))
@@ -81,11 +78,10 @@ class Tradutor(object):
             self.save_vocab()
             print('Vocabulário salvo')
 
-
-    def _read_data(self, path):
+    @staticmethod
+    def _read_data(path):
         with open(path, 'r') as arquivo:
             return re.split('\W+', arquivo.read().lower(), flags=re.UNICODE)
-
 
     # Criação do dataset
     def _cria_dataset(self, words):
@@ -114,16 +110,14 @@ class Tradutor(object):
 
         return data, dictionary, reverse_dictionary
 
-
     def _seq2seq_func(self, enc_inp, dec_inp, feed):
         """Função para o modelo de sequência com embeddings."""
         opts = self._options
 
         return seq2seq.embedding_rnn_seq2seq(
-                                  enc_inp, dec_inp, self._cell,
-                                  opts.vocab_size, opts.vocab_size,
-                                  opts.embedding_dim, feed_previous=feed)
-
+            enc_inp, dec_inp, self._cell,
+            opts.vocab_size, opts.vocab_size,
+            opts.embedding_dim, feed_previous=feed)
 
     def _optimize(self, loss):
         """Função para gerar o otimizador do modelo."""
@@ -133,24 +127,22 @@ class Tradutor(object):
         train_op = optimizer.minimize(loss)
         self._train_op = train_op
 
-
     def _create_tensors(self):
         """Função para gerar os Tensors do modelo."""
         opts = self._options
 
         encoder_inputs = [tf.placeholder(tf.int32, shape=(None,),
-                                               name='inp%i' % t)
-                                for t in range(opts.seq_length)]
+                                         name='inp%i' % t)
+                          for t in range(opts.seq_length)]
         labels = [tf.placeholder(tf.int32, shape=(None,),
-                                  name='labels%i' % t)
-                        for t in range(opts.seq_length)]
+                                 name='labels%i' % t)
+                  for t in range(opts.seq_length)]
         weights = [tf.ones_like(labels_t, dtype=tf.float32)
-                         for labels_t in labels]
+                   for labels_t in labels]
         decoder_inputs = ([tf.zeros_like(encoder_inputs[0], dtype=np.int32, name="GO")]
-                                + encoder_inputs[:-1])
+                          + encoder_inputs[:-1])
 
         return encoder_inputs, labels, weights, decoder_inputs
-
 
     def build_graph(self):
         """Criação do grafo para o tradutor."""
@@ -173,7 +165,6 @@ class Tradutor(object):
 
         self.saver = tf.train.Saver(tf.global_variables())
 
-
     def train(self):
         """Treinamento de acordo com o número de iterações."""
         opts = self._options
@@ -185,8 +176,8 @@ class Tradutor(object):
             y = []
 
             for __ in range(opts.batch_size // opts.seq_length):
-                x.append(self.data_pt[data_index:data_index+opts.seq_length])
-                y.append(self.data_en[data_index:data_index+opts.seq_length])
+                x.append(self.data_pt[data_index:data_index + opts.seq_length])
+                y.append(self.data_en[data_index:data_index + opts.seq_length])
                 data_index = data_index + opts.seq_length
 
             x = np.array(x).T
@@ -195,8 +186,7 @@ class Tradutor(object):
             feed_dict = {self._encoder_inputs[t]: x[t] for t in range(opts.seq_length)}
             feed_dict.update({self._labels[t]: y[t] for t in range(opts.seq_length)})
 
-            __, loss_t= self._session.run([self._train_op, self._loss], feed_dict)
-
+            _, loss_t = self._session.run([self._train_op, self._loss], feed_dict)
 
     def save_vocab(self):
         opts = self._options
@@ -205,55 +195,65 @@ class Tradutor(object):
             os.mkdir(opts.save_path)
 
         with open(os.path.join(opts.save_path, 'vocab_pt'), 'w') as file_pt:
-            file_pt.write('DATA\n')
             for word in self.data_pt:
                 file_pt.write('{} '.format(word))
-            file_pt.write('\nDICTIONARY\n')
+            file_pt.write('\n{}\n'.format(opts.vocab_size))
             for i in self.dict_pt.keys():
-                file_pt.write("{}@@{}\n".format(i, self.dict_pt[i]))
-            file_pt.write('REVERSE_DICTIONARY\n')
+                file_pt.write("{}%@{}\n".format(i, self.dict_pt[i]))
+            file_pt.write('{}\n'.format(opts.vocab_size))
             for i in self.rev_dict_pt.keys():
-                file_pt.write("{}@@{}\n".format(i, self.rev_dict_pt[i]))
+                file_pt.write("{}%@{}\n".format(i, self.rev_dict_pt[i]))
 
         with open(os.path.join(opts.save_path, 'vocab_en'), 'w') as file_en:
-            file_en.write('DATA\n')
             for word in self.data_en:
                 file_en.write('{} '.format(word))
-            file_en.write('\nDICTIONARY\n')
+            file_en.write('\n{}\n'.format(opts.vocab_size))
             for i in self.dict_en.keys():
-                file_en.write("{}@@{}\n".format(i, self.dict_en[i]))
-            file_en.write('REVERSE_DICTIONARY\n')
+                file_en.write("{}%@{}\n".format(i, self.dict_en[i]))
+            file_en.write('{}\n'.format(opts.vocab_size))
             for i in self.rev_dict_en.keys():
-                file_en.write("{}@@{}\n".format(i, self.rev_dict_en[i]))
+                file_en.write("{}%@{}\n".format(i, self.rev_dict_en[i]))
 
+    def recria_dataset(self, path):
+        opts = self._options
 
-    def _recria_dataset(self, path):
+        dictionary = {}
+        reverse_dictionary = {}
+        data = []
+
         with codecs.open(path, encoding='utf-8') as file_:
-            dictionary = {}
-            reverse_dictionary = {}
-            data = []
-            rev = False
-            data_bool = False
-
-            for line in file_.readlines():
-                line = line.rstrip()
-                if rev:
-                    split_line = re.split('@@', line, flags=re.UNICODE)
-                    reverse_dictionary[split_line[0]] = split_line[1]
-                elif data_bool:
-                    data = line.split()
-                    data_bool = False
-                elif line == 'DATA':
-                    data_bool = True
-                elif line == 'DICTIONARY':
-                    rev = False
-                elif line == 'REVERSE_DICTIONARY':
-                    rev = True
-                else:
-                    split_line = re.split('@@', line, flags=re.UNICODE)
-                    dictionary[split_line[0]] = split_line[1]
-
+            data = file_.readline().split()
+            dict_size = int(file_.readline())
+            for _ in range(dict_size):
+                split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
+                dictionary[split_line[0]] = split_line[1]
+            rev_dict_size = int(file_.readline())
+            for _ in range(rev_dict_size):
+                split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
+                reverse_dictionary[split_line[0]] = split_line[1]
         return data, dictionary, reverse_dictionary
+
+    def _process_text(self, text):
+        text_list = []
+        for t in re.split('\W+', text, flags=re.UNICODE):
+            if t not in self.dict_pt:
+                text_list.append(self.dict_pt['UKN'])
+            else:
+                text_list.append((self.dict_pt[t]))
+        return text_list
+
+
+# O que fazer se o tamanho do texto for menor do que seq_length
+
+    '''def traduzir(self, text):
+        processed_text = self._process_text(text)
+        processed_text = np.array(processed_text).T
+
+        feed_dict = {self._encoder_inputs[t]: processed_text[t] for t in range(opts.seq_length)}
+        translated_text = self._session.run(self._decoder_outputs, feed_dict)
+
+        return translated_text'''
+
 
 
 def main(argv):
@@ -264,7 +264,7 @@ def main(argv):
             with tf.Graph().as_default(), tf.Session() as session:
                 opts = Options()
                 nmt = Tradutor(opts, session)
-                print(nmt.dict_pt)
+                print(nmt._process_text('Oi oi testando não sei se vai dar certo isso'))
     else:
         if not FLAGS.path_pt or not FLAGS.path_en or not FLAGS.save_path:
             raise ValueError('--path_pt --path_en e --save_path são necessários.')
