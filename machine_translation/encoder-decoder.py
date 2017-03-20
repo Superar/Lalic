@@ -230,30 +230,43 @@ class Tradutor(object):
             rev_dict_size = int(file_.readline())
             for _ in range(rev_dict_size):
                 split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
-                reverse_dictionary[split_line[0]] = split_line[1]
+                reverse_dictionary[int(split_line[0])] = split_line[1]
         return data, dictionary, reverse_dictionary
 
+
+# TODO: Como tratar o caso do texto ser menor do que seq_length
+
     def _process_text(self, text):
+        opts = self._options
+
         text_list = []
-        for t in re.split('\W+', text, flags=re.UNICODE):
+        tokens = re.split('\W+', text, flags=re.UNICODE)
+        for t in tokens:
             if t not in self.dict_pt:
                 text_list.append(self.dict_pt['UKN'])
             else:
                 text_list.append((self.dict_pt[t]))
+
+        text_length = len(text_list)
+        if text_length < opts.seq_length:
+            ukn_list = [self.dict_pt['UKN']] * (opts.seq_length - text_length)
+            text_list.extend(ukn_list)
         return text_list
 
+    def translate(self, text):
+        opts = self._options
 
-# O que fazer se o tamanho do texto for menor do que seq_length
-
-    '''def traduzir(self, text):
         processed_text = self._process_text(text)
         processed_text = np.array(processed_text).T
 
-        feed_dict = {self._encoder_inputs[t]: processed_text[t] for t in range(opts.seq_length)}
-        translated_text = self._session.run(self._decoder_outputs, feed_dict)
+        feed_dict = {self._encoder_inputs[t]: processed_text[t].reshape((1,))
+                     for t in range(opts.seq_length)}
+        decoder_outputs_values = self._session.run(self._decoder_outputs, feed_dict)
+        translated_text_values = [logits_t.argmax(axis=1).tolist()
+                           for logits_t in decoder_outputs_values]
+        translated_text = [self.rev_dict_en[w[0]] for w in translated_text_values]
 
-        return translated_text'''
-
+        return translated_text
 
 
 def main(argv):
@@ -264,7 +277,7 @@ def main(argv):
             with tf.Graph().as_default(), tf.Session() as session:
                 opts = Options()
                 nmt = Tradutor(opts, session)
-                print(nmt._process_text('Oi oi testando não sei se vai dar certo isso'))
+                print(nmt.translate('Oi oi testando não sei se vai dar certo isso'))
     else:
         if not FLAGS.path_pt or not FLAGS.path_en or not FLAGS.save_path:
             raise ValueError('--path_pt --path_en e --save_path são necessários.')
