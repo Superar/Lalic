@@ -8,6 +8,7 @@ from tensorflow.contrib.rnn.python.ops import rnn_cell
 import os
 import codecs
 import sys
+from options import Options
 
 flags = tf.app.flags
 
@@ -25,31 +26,6 @@ flags.DEFINE_float("momentum", 0.9, "Momentum para treinamento")
 flags.DEFINE_boolean("load_model", False, "Indica se o modelo precisa ser carregado de um arquivo")
 
 FLAGS = flags.FLAGS
-
-
-class Options(object):
-    """Opções do modelo do tradutor."""
-
-    def __init__(self):
-        # Opções para geração do vocabulário
-        self.vocab_size = FLAGS.vocab_size
-        self.path_pt = FLAGS.path_pt
-        self.path_en = FLAGS.path_en
-
-        # Opções para criação do modelo
-        self.seq_length = FLAGS.seq_length
-        self.batch_size = FLAGS.batch_size
-        self.embedding_dim = FLAGS.embedding_dim
-        self.memory_dim = FLAGS.memory_dim
-
-        # Opções para treinamento
-        self.iterations = FLAGS.iterations
-        self.learning_rate = FLAGS.learning_rate
-        self.momentum = FLAGS.momentum
-
-        # Opções para salvar e carregar o modelo
-        self.save_path = FLAGS.save_path
-        self.load_model = FLAGS.load_model
 
 
 class Tradutor(object):
@@ -189,6 +165,7 @@ class Tradutor(object):
             _, loss_t = self._session.run([self._train_op, self._loss], feed_dict)
 
     def save_vocab(self):
+        """Salva o vocabulário para futuro carregamento."""
         opts = self._options
 
         if not os.path.exists(opts.save_path):
@@ -215,6 +192,7 @@ class Tradutor(object):
                 file_en.write("{}%@{}\n".format(i, self.rev_dict_en[i]))
 
     def recria_dataset(self, path):
+        """Carrega o vocabulário salvo."""
         opts = self._options
 
         dictionary = {}
@@ -232,7 +210,6 @@ class Tradutor(object):
                 split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
                 reverse_dictionary[int(split_line[0])] = split_line[1]
         return data, dictionary, reverse_dictionary
-
 
 # TODO: Como tratar o caso do texto ser menor do que seq_length
 
@@ -275,7 +252,7 @@ def main(argv):
             raise ValueError('--save_path é necessário')
         else:
             with tf.Graph().as_default(), tf.Session() as session:
-                opts = Options()
+                opts = Options(FLAGS)
                 nmt = Tradutor(opts, session)
                 print(nmt.translate('Oi oi testando não sei se vai dar certo isso'))
     else:
@@ -283,7 +260,7 @@ def main(argv):
             raise ValueError('--path_pt --path_en e --save_path são necessários.')
         else:
             with tf.Graph().as_default(), tf.Session() as session:
-                opts = Options()
+                opts = Options(FLAGS)
                 nmt = Tradutor(opts, session)
                 nmt.train()
                 print('Modelo treinado com {} iterações'.format(FLAGS.iterations))
