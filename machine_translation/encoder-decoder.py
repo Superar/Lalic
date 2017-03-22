@@ -56,7 +56,7 @@ class Tradutor(object):
 
     @staticmethod
     def _read_data(path):
-        with open(path, 'r') as arquivo:
+        with codecs.open(path, encoding='utf-8') as arquivo:
             return re.split('\W+', arquivo.read().lower(), flags=re.UNICODE)
 
     # Criação do dataset
@@ -171,7 +171,7 @@ class Tradutor(object):
         if not os.path.exists(opts.save_path):
             os.mkdir(opts.save_path)
 
-        with open(os.path.join(opts.save_path, 'vocab_pt'), 'w') as file_pt:
+        with codecs.open(os.path.join(opts.save_path, 'vocab_pt'), 'w', encoding='utf-8') as file_pt:
             for word in self.data_pt:
                 file_pt.write('{} '.format(word))
             file_pt.write('\n{}\n'.format(opts.vocab_size))
@@ -181,7 +181,7 @@ class Tradutor(object):
             for i in self.rev_dict_pt.keys():
                 file_pt.write("{}%@{}\n".format(i, self.rev_dict_pt[i]))
 
-        with open(os.path.join(opts.save_path, 'vocab_en'), 'w') as file_en:
+        with codecs.open(os.path.join(opts.save_path, 'vocab_en'), 'w', encoding='utf-8') as file_en:
             for word in self.data_en:
                 file_en.write('{} '.format(word))
             file_en.write('\n{}\n'.format(opts.vocab_size))
