@@ -29,31 +29,21 @@ flags.DEFINE_boolean("load_model", False, "Indica se o modelo precisa ser carreg
 FLAGS = flags.FLAGS
 
 
-class Tradutor(object):
-    """Modelo de tradutor encoder-decoder."""
+class Dataset(object):
+    """Conjunto de dados para o tradutor."""
 
-    def __init__(self, options, session):
+    def __init__(self, options):
         self._options = options
-        self._session = session
-
-        # TODO: Arrumar o carregamento do modelo, dicionário está vazio
-
         if options.load_model:
-            self.data_pt, self.dict_pt, self.rev_dict_pt = self.recria_dataset(os.path.join(options.save_path, 'vocab_pt'))
-            self.data_en, self.dict_en, self.rev_dict_en = self.recria_dataset(os.path.join(options.save_path, 'vocab_en'))
-            self.build_graph()
-            print('Grafo criado')
-            self.saver.restore(session, os.path.join(options.save_path, 'encoder-decoder.ckpt'))
-            print('Modelo carregado')
+            self.data_pt, self.dict_pt, self.rev_dict_pt = self._recria_dataset(os.path.join(options.save_path, 'vocab_pt'))
+            self.data_en, self.dict_en, self.rev_dict_en = self._recria_dataset(os.path.join(options.save_path, 'vocab_en'))
         else:
             texto_portugues = self._read_data(options.path_pt)
             self.data_pt, self.dict_pt, self.rev_dict_pt = self._cria_dataset(texto_portugues)
             texto_ingles = self._read_data(options.path_en)
             self.data_en, self.dict_en, self.rev_dict_en = self._cria_dataset(texto_ingles)
-            self.build_graph()
-            print('Grafo criado')
-            self.save_vocab()
-            print('Vocabulário salvo')
+
+        self.save_vocab()
 
     @staticmethod
     def _read_data(path):
@@ -86,6 +76,70 @@ class Tradutor(object):
         reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
 
         return data, dictionary, reverse_dictionary
+
+    def save_vocab(self):
+        """Salva o vocabulário para futuro carregamento."""
+        opts = self._options
+
+        if not os.path.exists(opts.save_path):
+            os.mkdir(opts.save_path)
+
+        with codecs.open(os.path.join(opts.save_path, 'vocab_pt'), 'w', encoding='utf-8') as file_pt:
+            for word in self.data_pt:
+                file_pt.write('{} '.format(word))
+            file_pt.write('\n{}\n'.format(opts.vocab_size))
+            for i in self.dict_pt.keys():
+                file_pt.write("{}%@{}\n".format(i, self.dict_pt[i]))
+            file_pt.write('{}\n'.format(opts.vocab_size))
+            for i in self.rev_dict_pt.keys():
+                file_pt.write("{}%@{}\n".format(i, self.rev_dict_pt[i]))
+
+        with codecs.open(os.path.join(opts.save_path, 'vocab_en'), 'w', encoding='utf-8') as file_en:
+            for word in self.data_en:
+                file_en.write('{} '.format(word))
+            file_en.write('\n{}\n'.format(opts.vocab_size))
+            for i in self.dict_en.keys():
+                file_en.write("{}%@{}\n".format(i, self.dict_en[i]))
+            file_en.write('{}\n'.format(opts.vocab_size))
+            for i in self.rev_dict_en.keys():
+                file_en.write("{}%@{}\n".format(i, self.rev_dict_en[i]))
+
+    def _recria_dataset(self, path):
+        """Carrega o vocabulário salvo."""
+        opts = self._options
+
+        dictionary = {}
+        reverse_dictionary = {}
+        data = []
+
+        with codecs.open(path, encoding='utf-8') as file_:
+            data = file_.readline().split()
+            dict_size = int(file_.readline())
+            for _ in range(dict_size):
+                split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
+                dictionary[split_line[0]] = split_line[1]
+            rev_dict_size = int(file_.readline())
+            for _ in range(rev_dict_size):
+                split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
+                reverse_dictionary[int(split_line[0])] = split_line[1]
+        return data, dictionary, reverse_dictionary
+
+
+class Tradutor(object):
+    """Modelo de tradutor encoder-decoder."""
+
+    def __init__(self, options, dataset, embeddings, session):
+        self._options = options
+        self._session = session
+        self._dataset = dataset
+        self._embeddings = embeddings
+        self.build_graph()
+        print('Grafo criado')
+
+        if options.load_model:
+            self.saver.restore(session,
+                               os.path.join(options.save_path, 'encoder-decoder.ckpt'))
+            print('Modelo carregado')
 
     def _seq2seq_func(self, enc_inp, dec_inp, feed):
         """Função para o modelo de sequência com embeddings."""
@@ -153,8 +207,8 @@ class Tradutor(object):
             y = []
 
             for __ in range(opts.batch_size // opts.seq_length):
-                x.append(self.data_pt[data_index:data_index + opts.seq_length])
-                y.append(self.data_en[data_index:data_index + opts.seq_length])
+                x.append(self._dataset.data_pt[data_index:data_index + opts.seq_length])
+                y.append(self._dataset.data_en[data_index:data_index + opts.seq_length])
                 data_index = data_index + opts.seq_length
 
             x = np.array(x).T
@@ -165,53 +219,6 @@ class Tradutor(object):
 
             _, loss_t = self._session.run([self._train_op, self._loss], feed_dict)
 
-    def save_vocab(self):
-        """Salva o vocabulário para futuro carregamento."""
-        opts = self._options
-
-        if not os.path.exists(opts.save_path):
-            os.mkdir(opts.save_path)
-
-        with codecs.open(os.path.join(opts.save_path, 'vocab_pt'), 'w', encoding='utf-8') as file_pt:
-            for word in self.data_pt:
-                file_pt.write('{} '.format(word))
-            file_pt.write('\n{}\n'.format(opts.vocab_size))
-            for i in self.dict_pt.keys():
-                file_pt.write("{}%@{}\n".format(i, self.dict_pt[i]))
-            file_pt.write('{}\n'.format(opts.vocab_size))
-            for i in self.rev_dict_pt.keys():
-                file_pt.write("{}%@{}\n".format(i, self.rev_dict_pt[i]))
-
-        with codecs.open(os.path.join(opts.save_path, 'vocab_en'), 'w', encoding='utf-8') as file_en:
-            for word in self.data_en:
-                file_en.write('{} '.format(word))
-            file_en.write('\n{}\n'.format(opts.vocab_size))
-            for i in self.dict_en.keys():
-                file_en.write("{}%@{}\n".format(i, self.dict_en[i]))
-            file_en.write('{}\n'.format(opts.vocab_size))
-            for i in self.rev_dict_en.keys():
-                file_en.write("{}%@{}\n".format(i, self.rev_dict_en[i]))
-
-    def recria_dataset(self, path):
-        """Carrega o vocabulário salvo."""
-        opts = self._options
-
-        dictionary = {}
-        reverse_dictionary = {}
-        data = []
-
-        with codecs.open(path, encoding='utf-8') as file_:
-            data = file_.readline().split()
-            dict_size = int(file_.readline())
-            for _ in range(dict_size):
-                split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
-                dictionary[split_line[0]] = split_line[1]
-            rev_dict_size = int(file_.readline())
-            for _ in range(rev_dict_size):
-                split_line = re.split('%@', file_.readline().rstrip(), flags=re.UNICODE)
-                reverse_dictionary[int(split_line[0])] = split_line[1]
-        return data, dictionary, reverse_dictionary
-
 # TODO: Como tratar o caso do texto ser menor do que seq_length
 
     def _process_text(self, text):
@@ -220,14 +227,14 @@ class Tradutor(object):
         text_list = []
         tokens = re.split('\W+', text, flags=re.UNICODE)
         for t in tokens:
-            if t not in self.dict_pt:
-                text_list.append(self.dict_pt['UKN'])
+            if t not in self._dataset.dict_pt:
+                text_list.append(self._dataset.dict_pt['UKN'])
             else:
-                text_list.append((self.dict_pt[t]))
+                text_list.append((self._dataset.dict_pt[t]))
 
         text_length = len(text_list)
         if text_length < opts.seq_length:
-            ukn_list = [self.dict_pt['UKN']] * (opts.seq_length - text_length)
+            ukn_list = [self._dataset.dict_pt['UKN']] * (opts.seq_length - text_length)
             text_list.extend(ukn_list)
         return text_list
 
@@ -242,7 +249,7 @@ class Tradutor(object):
         decoder_outputs_values = self._session.run(self._decoder_outputs, feed_dict)
         translated_text_values = [logits_t.argmax(axis=1).tolist()
                            for logits_t in decoder_outputs_values]
-        translated_text = [self.rev_dict_en[w[0]] for w in translated_text_values]
+        translated_text = [self._dataset.rev_dict_en[w[0]] for w in translated_text_values]
 
         return translated_text
 
@@ -254,7 +261,15 @@ def main(argv):
         else:
             with tf.Graph().as_default(), tf.Session() as session_tradutor:
                 opts = Options(FLAGS)
-                nmt = Tradutor(opts, session_tradutor)
+                dataset = Dataset(opts)
+                embed = Embedder(opts, num_skips=2, skip_window=1,
+                                 data=dataset.data_pt,
+                                 dictionary=dataset.dict_pt,
+                                 reverse_dictionary=dataset.rev_dict_pt)
+                nmt = Tradutor(opts,
+                               dataset=dataset,
+                               embeddings=embed,
+                               session=session_tradutor)
                 print(nmt.translate('Oi oi testando não sei se vai dar certo isso'))
     else:
         if not FLAGS.path_pt or not FLAGS.path_en or not FLAGS.save_path:
@@ -263,15 +278,19 @@ def main(argv):
             grafo_tradutor = tf.Graph()
             with grafo_tradutor.as_default(), tf.Session() as session_tradutor:
                 opts = Options(FLAGS)
-                nmt = Tradutor(opts, session_tradutor)
+                dataset = Dataset(opts)
                 embed = Embedder(opts, num_skips=2, skip_window=1,
-                                 data=nmt.data_pt, dictionary=nmt.dict_pt, reverse_dictionary=nmt.rev_dict_pt)
-                print(embed.create_embeddings(10))
-                # nmt = Tradutor(opts, session)
-                # nmt.train()
-                # print('Modelo treinado com {} iterações'.format(FLAGS.iterations))
-                # nmt.saver.save(session, os.path.join(opts.save_path, 'encoder-decoder.ckpt'))
-                # print('Modelo salvo')
+                                 data=dataset.data_pt,
+                                 dictionary=dataset.dict_pt,
+                                 reverse_dictionary=dataset.rev_dict_pt)
+                nmt = Tradutor(opts,
+                               dataset=dataset,
+                               embeddings=embed,
+                               session=session_tradutor)
+                nmt.train()
+                print('Modelo treinado com {} iterações'.format(FLAGS.iterations))
+                nmt.saver.save(session_tradutor, os.path.join(opts.save_path, 'encoder-decoder.ckpt'))
+                print('Modelo salvo')
 
 
 if __name__ == '__main__':

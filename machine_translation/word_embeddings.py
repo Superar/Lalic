@@ -98,6 +98,6 @@ class Embedder(object):
 
                 loss_val, _ = session_embeddings.run([self._loss, self._optimizer], feed_dict=feed_dict)
 
-        final_embeddings = self._normalized_embeddings.eval(session=session_embeddigs)
+            final_embeddings = self._normalized_embeddings.eval(session=session_embeddings)
 
         return final_embeddings
