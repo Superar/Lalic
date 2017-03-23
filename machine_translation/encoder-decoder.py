@@ -9,6 +9,7 @@ import os
 import codecs
 import sys
 from options import Options
+from word_embeddings import Embedder
 
 flags = tf.app.flags
 
@@ -251,21 +252,26 @@ def main(argv):
         if not FLAGS.save_path:
             raise ValueError('--save_path é necessário')
         else:
-            with tf.Graph().as_default(), tf.Session() as session:
+            with tf.Graph().as_default(), tf.Session() as session_tradutor:
                 opts = Options(FLAGS)
-                nmt = Tradutor(opts, session)
+                nmt = Tradutor(opts, session_tradutor)
                 print(nmt.translate('Oi oi testando não sei se vai dar certo isso'))
     else:
         if not FLAGS.path_pt or not FLAGS.path_en or not FLAGS.save_path:
             raise ValueError('--path_pt --path_en e --save_path são necessários.')
         else:
-            with tf.Graph().as_default(), tf.Session() as session:
+            grafo_tradutor = tf.Graph()
+            with grafo_tradutor.as_default(), tf.Session() as session_tradutor:
                 opts = Options(FLAGS)
-                nmt = Tradutor(opts, session)
-                nmt.train()
-                print('Modelo treinado com {} iterações'.format(FLAGS.iterations))
-                nmt.saver.save(session, os.path.join(opts.save_path, 'encoder-decoder.ckpt'))
-                print('Modelo salvo')
+                nmt = Tradutor(opts, session_tradutor)
+                embed = Embedder(opts, num_skips=2, skip_window=1,
+                                 data=nmt.data_pt, dictionary=nmt.dict_pt, reverse_dictionary=nmt.rev_dict_pt)
+                print(embed.create_embeddings(10))
+                # nmt = Tradutor(opts, session)
+                # nmt.train()
+                # print('Modelo treinado com {} iterações'.format(FLAGS.iterations))
+                # nmt.saver.save(session, os.path.join(opts.save_path, 'encoder-decoder.ckpt'))
+                # print('Modelo salvo')
 
 
 if __name__ == '__main__':

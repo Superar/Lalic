@@ -28,10 +28,9 @@ class Embedder(object):
         self._data_index = 0
 
     def _cria_batch(self):
-        assert tam_batch % num_skips == 0
-        assert num_skips <= 2 * skip_window
-
         opts = self._options
+        assert opts.batch_size % self._num_skips == 0
+        assert self._num_skips <= 2 * self._skip_window
 
         batch = np.ndarray(shape=opts.batch_size, dtype=np.int32)
         labels = np.ndarray(shape=(opts.batch_size, 1), dtype=np.int32)
@@ -59,9 +58,9 @@ class Embedder(object):
     def _cria_grafo(self):
         opts = self._options
 
-        self._train_inputs = tf.placeholder(tf.int32, shape=[batch_size],
+        self._train_inputs = tf.placeholder(tf.int32, shape=[opts.batch_size],
                                             name="train_inputs")
-        self._train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1],
+        self._train_labels = tf.placeholder(tf.int32, shape=[opts.batch_size, 1],
                                             name="train_labels")
         self._embeddings = tf.Variable(tf.random_uniform([opts.vocab_size, opts.embedding_dim], -1.0, 1.0),
                                        name="embeddings")
@@ -81,22 +80,24 @@ class Embedder(object):
                            biases=self._nce_biases,
                            labels=self._train_labels,
                            inputs=self._embed,
-                        #    num_sampled=num_sampled,
+                           num_sampled=64,
                            num_classes=opts.vocab_size))
 
         self._optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(self._loss)
 
     def create_embeddings(self, num_steps):
-        with tf.Graph().as_default(), tf.Session() as session:
+        grafo_embeddings = tf.Graph()
+        with grafo_embeddings.as_default(), tf.Session() as session_embeddings:
+            self._data_index = 0
             self._cria_grafo()
-            session.run(tf.global_variables_initializer())
+            session_embeddings.run(tf.global_variables_initializer())
 
-            for _ in xrange(num_steps):
+            for _ in range(num_steps):
                 batch_inputs, batch_labels = self._cria_batch()
                 feed_dict = {self._train_inputs: batch_inputs, self._train_labels: batch_labels}
 
-                loss_val, _ = session.run([loss, optimizer], feed_dict=feed_dict)
+                loss_val, _ = session_embeddings.run([self._loss, self._optimizer], feed_dict=feed_dict)
 
-        final_embeddings = self._normalized_embeddings.eval()
+        final_embeddings = self._normalized_embeddings.eval(session=session_embeddigs)
 
         return final_embeddings
