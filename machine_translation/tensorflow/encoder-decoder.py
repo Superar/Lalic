@@ -141,56 +141,59 @@ class Tradutor(object):
                                os.path.join(options.save_path, 'encoder-decoder.ckpt'))
             print('Modelo carregado')
 
-    def _seq2seq_func(self, enc_inp, dec_inp, feed):
+# TODO: Transformar em dynamic_rnn
+
+    def _seq2seq_func(self):
         """Função para o modelo de sequência com embeddings."""
         opts = self._options
 
-        return seq2seq.embedding_rnn_seq2seq(
-            enc_inp, dec_inp, self._cell,
-            opts.vocab_size, opts.vocab_size,
-            opts.embedding_dim, feed_previous=feed)
+        return tf.nn.dynamic_rnn(self._cell, self._encoder_inputs, dtype=tf.float32)
 
-    def _optimize(self, loss):
+    def _optimize(self):
         """Função para gerar o otimizador do modelo."""
         opts = self._options
 
         optimizer = tf.train.MomentumOptimizer(opts.learning_rate, opts.momentum)
-        train_op = optimizer.minimize(loss)
+        train_op = optimizer.minimize(self._loss)
         self._train_op = train_op
 
     def _create_tensors(self):
         """Função para gerar os Tensors do modelo."""
         opts = self._options
 
-        encoder_inputs = [tf.placeholder(tf.int32, shape=(None,),
-                                         name='inp%i' % t)
-                          for t in range(opts.seq_length)]
-        labels = [tf.placeholder(tf.int32, shape=(None,),
-                                 name='labels%i' % t)
-                  for t in range(opts.seq_length)]
-        weights = [tf.ones_like(labels_t, dtype=tf.float32)
-                   for labels_t in labels]
-        decoder_inputs = ([tf.zeros_like(encoder_inputs[0], dtype=np.int32, name="GO")]
-                          + encoder_inputs[:-1])
+        encoder_inputs = tf.placeholder(tf.float32,
+                                        [None, opts.seq_length, opts.embedding_dim],
+                                        name = 'enc_inp')
+        labels = tf.placeholder(tf.float32,
+                                [None, opts.seq_length, opts.embedding_dim],
+                                name = 'labels')
+        weights = tf.Variable(tf.truncated_normal([1, opts.embedding_dim],
+                                                  stddev=0.1))
+        # decoder_inputs = ([tf.zeros_like(encoder_inputs[0], dtype=np.int32, name="GO")]
+        #                   + encoder_inputs[:-1])
 
-        return encoder_inputs, labels, weights, decoder_inputs
+        return encoder_inputs, labels, weights # , decoder_inputs
 
     def build_graph(self):
         """Criação do grafo para o tradutor."""
         opts = self._options
 
-        encoder_inputs, labels, weights, decoder_inputs = self._create_tensors()
+        encoder_inputs, labels, weights = self._create_tensors()
         self._encoder_inputs = encoder_inputs
         self._labels = labels
         self._weights = weights
-        self._decoder_inputs = decoder_inputs
+        # self._decoder_inputs = decoder_inputs
 
         self._cell = tf.contrib.rnn.LSTMCell(opts.memory_dim)
-        self._decoder_outputs, self._decorder_memory = self._seq2seq_func(encoder_inputs, decoder_inputs, False)
+        self._decoder_outputs, self._decoder_memory = self._seq2seq_func()
+        self._decoder_outputs = tf.reshape(self._decoder_outputs, [-1, opts.embedding_dim])
 
-        loss = seq2seq.sequence_loss(self._decoder_outputs, labels, weights, opts.vocab_size)
+        self._output = tf.nn.softmax(tf.matmul(self._decoder_outputs, self._weights))
+        self._output = tf.reshape(self._output, [-1, opts.seq_length, opts.embedding_dim])
+
+        loss = tf.reduce_mean(-tf.reduce_sum(self._labels * tf.log(self._output), [1, 2]))
         self._loss = loss
-        self._optimize(loss)
+        self._optimize()
 
         self._session.run(tf.global_variables_initializer())
 
@@ -246,12 +249,9 @@ class Tradutor(object):
 
         feed_dict = {self._encoder_inputs[t]: processed_text[t].reshape((1,))
                      for t in range(opts.seq_length)}
-        decoder_outputs_values = self._session.run(self._decoder_outputs, feed_dict)
-        translated_text_values = [logits_t.argmax(axis=1).tolist()
-                           for logits_t in decoder_outputs_values]
-        translated_text = [self._dataset.rev_dict_en[w[0]] for w in translated_text_values]
+        decoder_output = self._session.run(self._output, feed_dict)
 
-        return translated_text
+        return decoder_output
 
 
 def main(argv):
