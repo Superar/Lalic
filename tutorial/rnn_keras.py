@@ -25,7 +25,7 @@ in_test = sequence.pad_sequences(in_test, maxlen=max_seq_length)
 
 # Criação do modelo
 embedding_dim = 32
-model = Sequential
+model = Sequential()
 # Word ebeddings
 model.add(Embedding(vocab_size, embedding_dim, input_length=max_seq_length))
 # Modelo de LSTM com 100 neurônios
