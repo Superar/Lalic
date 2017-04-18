@@ -11,6 +11,7 @@ from keras.layers.wrappers import TimeDistributed
 from keras.layers import RepeatVector
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
+from keras.preprocessing import text
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-pt', '--path_pt', help='Caminho para texto em português',
@@ -30,28 +31,18 @@ FLAGS = parser.parse_args()
 
 def read_data(path):
     with codecs.open(FLAGS.path_pt, encoding='utf-8') as _file:
-        return re.split('\W+', _file.read().lower(), flags=re.UNICODE)
+        return _file.read()
 
 
-def create_dataset(words):
-    count = [['<IGN>', -1], ['<START>', -1], ['END', -1], ['UKN', -1]]
-    count.extend(Counter(words).most_common(FLAGS.vocabulary_size - 1))
+def create_dataset(input_text):
+    words = text.text_to_word_sequence(input_text)
+    data = text.one_hot(input_text, FLAGS.vocabulary_size)
+    dictionary = dict(zip(words, data))
+    reverse_dictionary = dict(zip(data, words))
 
-    dictionary = dict()
-    for word, __ in count:
-        dictionary[word] = len(dictionary)
+    #TODO: Transformar data em lista de listas de tamanho sequence_length
 
-    data = list()
-    for word in words:
-        if word in dictionary:
-            index = dictionary[word]
-        else:
-            index = 0
-        data.append(index)
-
-    reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
-
-    return np.array(data), dictionary, reverse_dictionary
+    return [data], dictionary, reverse_dictionary
 
 if not FLAGS.path_pt or not FLAGS.path_en:
     raise ValueError('--path_pt e --path_en são necessários.')
@@ -80,6 +71,8 @@ else:
                               input_shape=(FLAGS.hidden_size, FLAGS.vocabulary_size)))
     model.compile(optimizer='adam', loss='mse')
 
+    data_pt = sequence.pad_sequences(data_pt, maxlen=FLAGS.sequence_length)
+    data_en = sequence.pad_sequences(data_en, maxlen=FLAGS.sequence_length)
     model.fit(data_pt, data_en,
               batch_size=64, epochs=3)
 
