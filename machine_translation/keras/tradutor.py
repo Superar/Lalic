@@ -10,6 +10,7 @@ from keras.layers import Activation
 from keras.layers.wrappers import TimeDistributed
 from keras.layers import RepeatVector
 from keras.layers.embeddings import Embedding
+from keras.preprocessing.text import Tokenizer
 from keras.preprocessing import sequence
 from keras.preprocessing import text
 
@@ -35,14 +36,22 @@ def read_data(path):
 
 
 def create_dataset(input_text):
-    words = text.text_to_word_sequence(input_text)
-    data = text.one_hot(input_text, FLAGS.vocabulary_size)
-    dictionary = dict(zip(words, data))
-    reverse_dictionary = dict(zip(data, words))
+    tokenizer = Tokenizer(num_words=FLAGS.vocabulary_size)
+    tokenizer.fit_on_texts([input_text])
+    sequences = tokenizer.texts_to_sequences([input_text])
 
-    #TODO: Transformar data em lista de listas de tamanho sequence_length
+    index = 0
+    _sequences = list()
+    for __ in range(len(sequences[0]) // FLAGS.sequence_length):
+        _sequences.append(sequences[0][index : index + FLAGS.sequence_length])
+        index = index + FLAGS.sequence_length
+    _sequences.append(sequences[0][index:])
+    sequences = sequence.pad_sequences(_sequences, maxlen=FLAGS.sequence_length)
 
-    return [data], dictionary, reverse_dictionary
+    word_index = tokenizer.word_index
+    rev_word_index = dict(zip(word_index.values(), word_index.keys()))
+
+    return sequences, word_index, rev_word_index
 
 if not FLAGS.path_pt or not FLAGS.path_en:
     raise ValueError('--path_pt e --path_en são necessários.')
@@ -68,11 +77,14 @@ else:
                   input_shape=(None, FLAGS.hidden_size),
                   return_sequences=True))
     model.add(TimeDistributed(Dense(1, activation='softmax'),
-                              input_shape=(FLAGS.hidden_size, FLAGS.vocabulary_size)))
+                              input_shape=(FLAGS.sequence_length,
+                                           FLAGS.hidden_size,
+                                           1)))
     model.compile(optimizer='adam', loss='mse')
 
     data_pt = sequence.pad_sequences(data_pt, maxlen=FLAGS.sequence_length)
     data_en = sequence.pad_sequences(data_en, maxlen=FLAGS.sequence_length)
+
     model.fit(data_pt, data_en,
               batch_size=64, epochs=3)
 
