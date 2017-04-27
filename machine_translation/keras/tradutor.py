@@ -10,6 +10,7 @@ from keras.layers import Activation
 from keras.layers.wrappers import TimeDistributed
 from keras.layers import RepeatVector
 from keras.layers.embeddings import Embedding
+from keras.layers import Reshape
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing import sequence
 from keras.preprocessing import text
@@ -69,24 +70,26 @@ else:
     model.add(GRU(hidden_size,
                   input_shape=(FLAGS.sequence_length, FLAGS.embedding_size)))
     model.add(Dense(FLAGS.hidden_size,
-                    input_shape=(FLAGS.hidden_size,)))
+                    input_shape=(None, FLAGS.hidden_size)))
     model.add(Activation('relu'))
     model.add(RepeatVector(FLAGS.sequence_length,
                            input_shape=(None, FLAGS.hidden_size)))
     model.add(GRU(FLAGS.hidden_size,
                   input_shape=(None, FLAGS.hidden_size),
                   return_sequences=True))
+    # model.add(Reshape((-1, FLAGS.sequence_length, 1)))
     model.add(TimeDistributed(Dense(1, activation='softmax'),
-                              input_shape=(FLAGS.sequence_length,
-                                           FLAGS.hidden_size,
-                                           1)))
+                              input_shape=(FLAGS.sequence_length,1)))
     model.compile(optimizer='adam', loss='mse')
 
     data_pt = sequence.pad_sequences(data_pt, maxlen=FLAGS.sequence_length)
     data_en = sequence.pad_sequences(data_en, maxlen=FLAGS.sequence_length)
+    data_en = np.reshape(data_en, (-1, FLAGS.sequence_length, 1))
 
-    model.fit(data_pt, data_en,
-              batch_size=64, epochs=3)
+    print(model.summary())
+    print(data_en.shape)
+
+    model.fit(data_pt, data_en, epochs=3)
 
     model.reset_states()
 
