@@ -1,0 +1,17 @@
+digraph G
+{
+  rankdir=LR
+
+  Input -> Dense1;
+  Dense1 -> Dropout1;
+  Dense1 -> Relu1 [style=dotted];
+  Relu1 -> Dropout1 [style=dotted];
+  Dropout1 -> Dense2;
+  Dense2 -> Dropout2;
+  Dense2 -> Relu2 [style=dotted];
+  Relu2 -> Dropout2 [style=dotted];
+  Dropout2 -> Dense3;
+  Dense3 -> Output;
+  Dense3 -> Softmax [style=dotted];
+  Softmax -> Output [style=dotted];
+}
