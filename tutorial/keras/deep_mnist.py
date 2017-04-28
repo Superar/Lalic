@@ -15,6 +15,8 @@ from keras.layers import Dropout
 # Transformando imagens em vetores únicos
 x_train = np.reshape(x_train, (-1, 784))
 x_test = np.reshape(x_test, (-1, 784))
+
+# Normalização
 x_train = x_train.astype('float32')
 x_test = x_test.astype('float32')
 x_train /= 255
@@ -35,12 +37,15 @@ model.add(Dense(10, activation='softmax', input_shape=(None, 512)))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop',
               metrics=['accuracy'])
 
+# Treinamento
 history = model.fit(x_train, y_train, epochs=20, validation_data=(x_test, y_test))
 
+# Avaliação do modelo
 score_depois = model.evaluate(x_test, y_test)
 
 print("\nPrecisão: {}".format(score_depois[1]))
 
+# Plot de gráfico
 plt.figure(1)
 plt.plot(history.history['acc'])
 plt.show()
