@@ -1,0 +1,41 @@
+digraph G
+{
+
+  rankdir = LR;
+
+  Input [shape=trapezium];
+  Output [shape=invtrapezium];
+  Dropout [shape=diamond];
+
+  subgraph cluster_Dense_1
+  {
+    label = "Dense(13)";
+
+    node [shape=box, label="Dense"];
+
+    1,2,3,4,5,6,7,8,9,10,11,12,13;
+
+  }
+
+  subgraph cluster_Dense_2
+  {
+    label = "Dense";
+
+    Mul [shape=diamond];
+    Sum [shape=diamond];
+    Weights [shape=house];
+    Bias [shape=house];
+    Activation [shape=diamond];
+
+    X -> Mul;
+    Weights -> Mul;
+    Mul -> Sum;
+    Bias -> Sum;
+    Sum -> Activation;
+  }
+
+  Input -> 1,2,3,4,5,6,7,8,9,10,11,12,13;
+  1,2,3,4,5,6,7,8,9,10,11,12,13 -> Dropout;
+  Dropout -> X;
+  Activation -> Output;
+}

@@ -1,0 +1,11 @@
+digraph G
+{
+  rankdir = LR;
+
+  Input [shape=trapezium];
+  Output [shape=invtrapezium];
+  Dense [shape=box];
+
+  Input -> Dense;
+  Dense -> Output;
+}

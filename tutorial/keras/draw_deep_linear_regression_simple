@@ -1,0 +1,15 @@
+digraph G
+{
+  rankdir = LR;
+
+  Input [shape=trapezium];
+  Output [shape=invtrapezium];
+  Dropout [shape=diamond];
+  Dense1 [shape=box, label="Dense(13)"]
+  Dense2 [shape=box, label="Dense"]
+
+  Input -> Dense1;
+  Dense1 -> Dropout;
+  Dropout -> Dense2;
+  Dense2 -> Output;
+}
