@@ -91,6 +91,8 @@ else:
 
     model.fit(data_pt, data_en, epochs=3)
 
+    model.save('/modelo/model.h5', overwrite=True)
+
     model.reset_states()
 
     scores = model.evaluate(data_pt, data_en)
