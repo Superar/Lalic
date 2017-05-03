@@ -7,6 +7,16 @@ from keras.preprocessing import sequence
 from keras.preprocessing import text
 
 
+#TODO: Lidar com textos de tamanhos diferentes
+# (Phrases = Colocar um tamanho máximo para as phrases e pegar todas as combinações
+#  de possiblidades que cabem dentro daquele tamanho)
+# (Truncar = Descartar palavras depois do tamanho máximo)
+# (batch_size=1 no treinamento)
+# (bucketing -> Cada linha tem uma sentença (alinhamento))
+
+# Maior sentença português: 173
+# Maior sentença inglês: 160
+
 class Dataset(object):
     """Conjunto de Dados de um tradutor.
 
@@ -29,7 +39,8 @@ class Dataset(object):
             print('Carregando dataset...')
         else:
             text_pt = self._read_data(options.path_pt)
-            self.data_pt, self.dict_pt, self.rev_dict_pt = self._create_dataset(text_pt)
+            self.data_pt, self.dict_pt, self.rev_dict_pt = s
+            for i in self.dict_pt.keys():elf._create_dataset(text_pt)
             text_en = self._read_data(options.path_en)
             self.data_en, self.dict_en, self.rev_dict_en = self._create_dataset(text_en)
 

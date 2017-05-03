@@ -9,7 +9,7 @@ parser.add_argument('-en', '--path_en', help='Caminho para texto em inglês',
                     type=str, default=None)
 parser.add_argument('-save', '--save_path',
                     help='Caminho para diretório onde o modelo será salvo ou de onde será carregado',
-                    type=str, default=None)
+                    type=str, default=None, required=True)
 parser.add_argument('-vsize', '--vocabulary_size', help='Tamanho do vocabulário',
                     type=int, default=50000)
 parser.add_argument('-esize', '--embedding_size', help='Dimensões para as word embeddings',
@@ -21,16 +21,16 @@ parser.add_argument('-slen', '--sequence_length', help='Tamanho máximo para as 
 parser.add_argument('-i', '--iterations', help='Número de iterações para o treinamento',
                     type=int, default=10)
 parser.add_argument('-l', '--load', help='Carrega o modelo',
-                    type=bool, default=False)
+                    action='store_true')
 
 FLAGS = parser.parse_args()
 
-if not FLAGS.save_path:
-    raise ValueError('--save_path é necessário.')
-elif FLAGS.load:
+
+if FLAGS.load:
     print('Carregando modelo...')
 else:
-    if not FLAGS.path_pt or not FLAGS.path_en or not FLAGS.save_path:
-        raise ValueError('--path_pt e --path_en são necessários.')
+    if not FLAGS.path_pt or not FLAGS.path_en:
+        parser.error('The following arguments are required: -pt/--path_pt, -en/path_en')
     else:
         tradutor = Tradutor(FLAGS)
+        tradutor.train()
