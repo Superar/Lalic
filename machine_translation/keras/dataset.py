@@ -23,7 +23,7 @@ class Dataset(object):
     Cada idioma possui os seguintes tipos de dados:
 
     data - Uma lista representando o texto, porém as palavras são
-           representadas por índices. O texto é distribuído sobre
+           representadas por índices. As sentenças são representadas por
            listas de tamanho sequence_length.
 
     dictionary - Um dicionário relacionando as palavras aos
@@ -39,8 +39,7 @@ class Dataset(object):
             print('Carregando dataset...')
         else:
             text_pt = self._read_data(options.path_pt)
-            self.data_pt, self.dict_pt, self.rev_dict_pt = s
-            for i in self.dict_pt.keys():elf._create_dataset(text_pt)
+            self.data_pt, self.dict_pt, self.rev_dict_pt = self._create_dataset(text_pt)
             text_en = self._read_data(options.path_en)
             self.data_en, self.dict_en, self.rev_dict_en = self._create_dataset(text_en)
 
@@ -59,23 +58,15 @@ class Dataset(object):
         """Lê e retorna o texto de um arquivo"""
 
         with codecs.open(path, encoding='utf-8') as _file:
-            return _file.read()
+            return _file.readlines()
 
 
     def _create_dataset(self, input_text):
         """Cria o conunto de dados a partir de um texto"""
 
         tokenizer = Tokenizer(num_words=self.options.vocabulary_size)
-        tokenizer.fit_on_texts([input_text])
-        sequences = tokenizer.texts_to_sequences([input_text])
-
-        index = 0
-        _sequences = list()
-        for __ in range(len(sequences[0]) // self.options.sequence_length):
-            _sequences.append(sequences[0][index : index + self.options.sequence_length])
-            index = index + self.options.sequence_length
-        _sequences.append(sequences[0][index:])
-        sequences = sequence.pad_sequences(_sequences, maxlen=self.options.sequence_length)
+        tokenizer.fit_on_texts(input_text)
+        sequences = tokenizer.texts_to_sequences(input_text)
 
         word_index = tokenizer.word_index
         rev_word_index = dict(zip(word_index.values(), word_index.keys()))
