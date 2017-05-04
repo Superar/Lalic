@@ -9,18 +9,27 @@ from keras.layers.embeddings import Embedding
 
 
 class Tradutor(object):
-    """Modelo de tradutor neural"""
+    """Modelo de tradutor neural.
+
+    O modelo consiste de:
+
+    dataset - Conjunto de dados para treinamento
+
+    model - Modelo Keras para a rede neural
+    """
 
     def __init__(self, options):
         self.options = options
         self.dataset = Dataset(options)
         self.model = Sequential()
-        self.build_model()
+        self._build_model()
 
         print(self.model.summary())
 
 
-    def build_model(self):
+    def _build_model(self):
+        """Constrói o modelo de rede neural."""
+        
         hidden_size = 512
 
         self.model.add(Embedding(self.options.vocabulary_size,
@@ -43,6 +52,8 @@ class Tradutor(object):
 
 
     def train(self):
+        """Realiza o treinamento da rede com os dados em dataset."""
+
         print('Iniciando treinamento')
         self.model.fit(self.dataset.data_pt,
                        self.dataset.data_en,

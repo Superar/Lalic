@@ -23,16 +23,19 @@ class Dataset(object):
     Cada idioma possui os seguintes tipos de dados:
 
     data - Uma lista representando o texto, porém as palavras são
-           representadas por índices. As sentenças são representadas por
+           representadas por índices.  As sentenças são representadas por
            listas de tamanho sequence_length.
 
     dictionary - Um dicionário relacionando as palavras aos
                  índices correspondentes
 
     rev_dictionary - Um dicionário relacionando os índices
-                     às palavras correspondentes"""
+                     às palavras correspondentes
+    """
 
     def __init__(self, options):
+        """ Contrutor da classe Dataset"""
+
         self.options = options
 
         if options.load:
@@ -55,7 +58,7 @@ class Dataset(object):
 
     @staticmethod
     def _read_data(path):
-        """Lê e retorna o texto de um arquivo"""
+        """Lê e retorna o texto de um arquivo em sentenças"""
 
         with codecs.open(path, encoding='utf-8') as _file:
             return _file.readlines()
@@ -76,7 +79,7 @@ class Dataset(object):
 
     def _save_vocab(self):
         """Salva vocabulário para futuro carregamento"""
-
+        
         if not os.path.exists(self.options.save_path):
             os.mkdir(self.options.save_path)
 
