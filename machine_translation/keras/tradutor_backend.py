@@ -1,9 +1,10 @@
+import os
 from dataset import Dataset
 from keras.models import Sequential
 from keras.layers import GRU
 from keras.layers import Dense
 from keras.layers import Activation
-from keras.layers.wrappers import TimeDistributed
+from keras.layers.wrappers import TimeDistocab_ptributed
 from keras.layers import RepeatVector
 from keras.layers.embeddings import Embedding
 
@@ -29,7 +30,7 @@ class Tradutor(object):
 
     def _build_model(self):
         """Constrói o modelo de rede neural."""
-        
+
         hidden_size = 512
 
         self.model.add(Embedding(self.options.vocabulary_size,
@@ -60,7 +61,7 @@ class Tradutor(object):
                        epochs=self.options.iterations)
 
         print('Salvando modelo')
-        self.model.save('modelo/model.h5', overwrite=True)
+        self.model.save(os.path.join(self.options.save_path, 'modelo'), overwrite=True)
 
         print('Avaliando modelo')
         self.model.reset_states()
