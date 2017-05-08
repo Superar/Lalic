@@ -4,7 +4,7 @@ from keras.models import Sequential
 from keras.layers import GRU
 from keras.layers import Dense
 from keras.layers import Activation
-from keras.layers.wrappers import TimeDistocab_ptributed
+from keras.layers.wrappers import TimeDistributed
 from keras.layers import RepeatVector
 from keras.layers.embeddings import Embedding
 
@@ -60,10 +60,14 @@ class Tradutor(object):
                        self.dataset.data_en,
                        epochs=self.options.iterations)
 
-        print('Salvando modelo')
-        self.model.save(os.path.join(self.options.save_path, 'modelo'), overwrite=True)
 
+    def save(self):
+        print('Salvando modelo')
+        self.model.save(os.path.join(self.options.save_path, 'modelo.h5'), overwrite=True)
+
+
+    def evaluate(self):
         print('Avaliando modelo')
         self.model.reset_states()
-        scores = self.model.evaluate(dataset.data_pt, dataset.data_en)
+        scores = self.model.evaluate(self.dataset.data_pt, self.dataset.data_en)
         print(scores)
