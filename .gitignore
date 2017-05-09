@@ -109,3 +109,6 @@ checkpoint
 *.h5
 vocab_en
 vocab_pt
+
+# Keras
+MNIST_data
