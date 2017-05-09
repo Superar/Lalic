@@ -1,0 +1,20 @@
+digraph G
+{
+
+  rankdir = LR;
+
+  Input [shape=trapezium];
+  Output [shape=invtrapezium];
+  Embedding [shape=diamond, label="Embedding"];
+  LSTM [shape=box, label="LSTM"];
+  Dense [shape=box, label="Dense"];
+
+  Input -> Embedding [label="500"];
+  Embedding -> LSTM [label="500x32"];
+  LSTM -> LSTM;
+  LSTM -> Dense [label="100"];
+  Dense -> Output [label="1"];
+
+  {rank=same; Input; Embedding;}
+  {rank=same; Dense; Output;}
+}

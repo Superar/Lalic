@@ -28,7 +28,7 @@ embedding_dim = 32
 model = Sequential()
 # Word ebeddings
 model.add(Embedding(vocab_size, embedding_dim, input_length=max_seq_length))
-# Modelo de LSTM com 100 neurônios
+# Modelo de LSTM com saída de dimensão 100
 model.add(LSTM(100))
 # Modelo calcula uma sigmoid para gerar duas saídas: 0 ou 1
 model.add(Dense(1, activation='sigmoid'))
