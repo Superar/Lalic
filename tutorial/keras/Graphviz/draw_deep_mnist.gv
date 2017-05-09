@@ -16,7 +16,7 @@ digraph G
   Dropout1 -> Dense2 [label="512"];
   Dense2 -> Dropout2 [label="512"];
   Dropout2 -> Dense3 [label="512"];
-  Dense3 -> Output [label="1"];
+  Dense3 -> Output [label="10"];
 
   {rank=same; Dense1; Dense2; Dense3;}
   {rank=same; Input; Output;}
