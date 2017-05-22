@@ -30,9 +30,9 @@ class Dataset(object):
         self.options = options
 
         if options.load:
-            text_pt = os.path.join(self.options.save_path, 'vocab_pt')
+            text_pt = os.path.join(options.save_path, 'vocab_pt')
             self.data_pt, self.dict_pt, self.rev_dict_pt = self._load_data(text_pt)
-            text_en = os.path.join(self.options.save_path, 'vocab_en')
+            text_en = os.path.join(options.save_path, 'vocab_en')
             self.data_en, self.dict_en, self.rev_dict_en = self._load_data(text_en)
         else:
             text_pt = self._read_data(options.path_pt)
