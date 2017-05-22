@@ -62,11 +62,13 @@ class Tradutor(object):
 
 
     def save(self):
+        """Salva o modelo em um arquivo SAVE_PATH/modelo.h5"""
         print('Salvando modelo')
         self.model.save(os.path.join(self.options.save_path, 'modelo.h5'), overwrite=True)
 
 
     def evaluate(self):
+        """Imprime na tela os scores do modelo sendo: [loss, accuracy]"""
         print('Avaliando modelo')
         self.model.reset_states()
         scores = self.model.evaluate(self.dataset.data_pt, self.dataset.data_en)
