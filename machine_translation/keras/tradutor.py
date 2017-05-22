@@ -33,6 +33,6 @@ else:
         parser.error('The following arguments are required: -pt/--path_pt, -en/path_en')
     else:
         tradutor = Tradutor(FLAGS)
-        # tradutor.train()
-        # tradutor.save()
+        tradutor.train()
+        tradutor.save()
         tradutor.evaluate()
