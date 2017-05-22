@@ -106,7 +106,7 @@ checkpoint
 *.data-00000-of-00001
 *.index
 *.meta
-*.h5
+# *.h5
 vocab_en
 vocab_pt
 
