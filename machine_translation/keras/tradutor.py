@@ -1,4 +1,5 @@
 import argparse
+import h5py
 from tradutor_backend import Tradutor
 
 
