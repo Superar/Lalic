@@ -34,6 +34,7 @@ class Dataset(object):
             self.data_pt, self.dict_pt, self.rev_dict_pt = self._load_data(text_pt)
             text_en = os.path.join(options.save_path, 'vocab_en')
             self.data_en, self.dict_en, self.rev_dict_en = self._load_data(text_en)
+
         else:
             text_pt = self._read_data(options.path_pt)
             self.data_pt, self.dict_pt, self.rev_dict_pt = self._create_dataset(text_pt)
@@ -42,12 +43,12 @@ class Dataset(object):
 
             self._save_vocab()
 
-            self.data_pt = sequence.pad_sequences(self.data_pt,
-                                                  maxlen=options.sequence_length)
-            self.data_en = sequence.pad_sequences(self.data_en,
-                                                  maxlen=options.sequence_length)
-            self.data_en = np.reshape(self.data_en,
-                                      (-1, options.sequence_length, 1))
+        self.data_pt = sequence.pad_sequences(self.data_pt,
+                                              maxlen=options.sequence_length)
+        self.data_en = sequence.pad_sequences(self.data_en,
+                                              maxlen=options.sequence_length)
+        self.data_en = np.reshape(self.data_en,
+                                  (-1, options.sequence_length, 1))
 
 
     @staticmethod

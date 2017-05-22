@@ -1,5 +1,6 @@
 import os
 from dataset import Dataset
+from keras.models import load_model
 from keras.models import Sequential
 from keras.layers import GRU
 from keras.layers import Dense
@@ -22,8 +23,13 @@ class Tradutor(object):
     def __init__(self, options):
         self.options = options
         self.dataset = Dataset(options)
-        self.model = Sequential()
-        self._build_model()
+
+        if options.load:
+            model_path = os.path.join(options.save_path, 'modelo.h5')
+            self.model = load_model(model_path)
+        else:
+            self.model = Sequential()
+            self._build_model()
 
         print(self.model.summary())
 
