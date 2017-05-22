@@ -24,8 +24,10 @@ class Tradutor(object):
         self.options = options
         self.dataset = Dataset(options)
 
+        model_path = os.path.join(options.save_path, 'modelo.h5')
         if options.load:
-            model_path = os.path.join(options.save_path, 'modelo.h5')
+            if not os.path.isfile(model_path):
+                raise FileNotFoundError('Arquivo {} não encontrado'.format(model_path))
             self.model = load_model(model_path)
         else:
             self.model = Sequential()
