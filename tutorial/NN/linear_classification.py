@@ -1,6 +1,8 @@
 import numpy as np
-from sklearn.svm import LinearSVC
 import matplotlib.pyplot as plt
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Activation
 
 
 # Cria os dados aleatórios
@@ -12,19 +14,24 @@ boundary = 2 * x - 1
 
 # Separa as classes entre: abaixo e acima da curva
 under_curve = y < boundary
-classes = [1 if under else 2 for under in under_curve]
+classes = [0 if under else 1 for under in under_curve]
 colors = ['b' if under else 'r' for under in under_curve]
 
 data = list(zip(x, y))
+data = [list(elem) for elem in data]
 
-# Treinamento usando SVM Linear
-model = LinearSVC()
-model.fit(data, classes)
+# Treinamento usando perceptron
+model = Sequential()
+model.add(Dense(1, activation='sigmoid', input_shape=(2,)))
 
-# Criação da linha da decision boundary aprendida
-w = model.coef_[0]
-b = model.intercept_[0]
-y_pred_depois = (-w[0] / w[1]) * x - (b / w[1])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+model.fit(data, classes, epochs=1000)
+
+w = model.get_weights()[0]
+b = model.get_weights()[1]
+
+y_pred_depois = x * (-w[0] / w[1]) - (b / w[1])
 
 # Plot
 plt.figure(1)
