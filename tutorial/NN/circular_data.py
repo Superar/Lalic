@@ -22,7 +22,7 @@ y2 = r2 * np.sin(theta)
 x = np.append(x1, x2)
 y = np.append(y1, y2)
 
-# # Criação do modelo
+# Criação do modelo
 model = Sequential()
 # Adição de uma camada Dense
 model.add(Dense(1, input_shape=(1,)))
