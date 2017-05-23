@@ -1,0 +1,16 @@
+digraph G
+{
+  rankdir = LR
+  edge [arrowhead="vee", arrowsize=0.6]
+
+  input1  [label="x1", shape=plaintext, width=0]
+  input2  [label="x2", shape=plaintext, width=0]
+  input3  [label="x3", shape=plaintext, width=0]
+  neuron1 [label="", shape=circle]
+  output [label="output", shape=plaintext]
+
+  input1 -> neuron1
+  input2 -> neuron1
+  input3 -> neuron1
+  neuron1 -> output
+}
