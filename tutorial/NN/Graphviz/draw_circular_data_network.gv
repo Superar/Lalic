@@ -1,0 +1,34 @@
+digraph G
+{
+  rankdir = LR
+  ranksep = "0.85"
+
+  edge [arrowhead="vee", arrowsize=0.6]
+
+  input1  [label="x1", shape=plaintext, width=0]
+  input2  [label="x2", shape=plaintext, width=0]
+  neuron11 [label="", shape=circle]
+  neuron12 [label="", shape=circle]
+  neuron13 [label="", shape=circle]
+  neuron21 [label="", shape=circle]
+  output [label="output", shape=plaintext]
+
+  input1 -> neuron11
+  input2 -> neuron11
+
+  input1 -> neuron12
+  input2 -> neuron12
+
+  input1 -> neuron13
+  input2 -> neuron13
+
+  neuron11 -> neuron21
+  neuron12 -> neuron21
+  neuron13 -> neuron21
+
+  neuron21 -> output
+
+  {rank=same; input1; input2;}
+  {rank=same; neuron11; neuron12; neuron13;}
+  {rank=same; output;}
+}
