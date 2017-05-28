@@ -1,4 +1,3 @@
-# import argparse
 import h5py
 from parser import Arguments
 from tradutor_backend import Tradutor
