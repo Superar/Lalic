@@ -52,3 +52,6 @@ class Arguments(object):
 
     def getFLAGS(self):
         return self._FLAGS
+
+    def error(self, msg):
+        self._parser.error(msg)

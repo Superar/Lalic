@@ -11,7 +11,7 @@ if FLAGS.load:
     tradutor.evaluate()
 else:
     if not FLAGS.path_pt or not FLAGS.path_en:
-        parser.error('The following arguments are required: -pt/--path_pt, -en/path_en')
+        arg.error('The following arguments are required: -pt/--path_pt, -en/path_en')
     else:
         tradutor = Tradutor(FLAGS)
         tradutor.train()
