@@ -8,6 +8,13 @@ from keras.preprocessing import sequence
 from keras.preprocessing import text
 
 
+# TODO: Melhorar Tokenização com o NLTK
+# Tokenização: nltk.tokenize.punkt.PunktLanguageVars -> word_tokenize
+# Stemming: nltk.stem.RSLPStemmer()
+# Formato:
+# Token Token Token Raíz@@ Sufixo Token Token Token...
+
+
 class Dataset(object):
     """Conjunto de Dados de um tradutor.
 
