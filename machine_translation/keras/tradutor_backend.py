@@ -10,6 +10,12 @@ from keras.layers import RepeatVector
 from keras.layers.embeddings import Embedding
 
 
+# TODO: Calcular precisão com NLTK.bleu
+# TODO: Melhorar modelo. Opções:
+# Adicionais mais camadas RNN
+# Adicionar Attention
+
+
 class Tradutor(object):
     """Modelo de tradutor neural.
 
