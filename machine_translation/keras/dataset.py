@@ -72,6 +72,9 @@ class Dataset(object):
 
         tokenizer = RegexpTokenizer(r'\w+')
 
+    # Criação de duas listas:
+    # tokenized_text mantém as sentenças, porém cada sentença está tokenizada
+    # text_words representa todas as palavras do texto tokenizadas, sem sentenças
         tokenized_text = list()
         text_words = list()
         for sentence in input_text:
@@ -80,6 +83,9 @@ class Dataset(object):
                 text_words.append(word)
             tokenized_text.append(tokenized_sentence)
 
+    # count mantém todas as vocabulary_size palavras mais comuns no texto
+    # Estas palavras são utilizadas para criar um dicionário de palavra : índice (word_index)
+    # O índice 0 não é utilizado pois será utilizado no padding
         count = [['UKN', -1]]
         count.extend(Counter(text_words).most_common(self.options.vocabulary_size -1))
 
@@ -87,6 +93,8 @@ class Dataset(object):
         for word, _ in count:
             word_index[word] = len(word_index) + 1
 
+    # As sentenças são transformadas em sequências de índices,
+    # levando em consideração palavras fora do vocabulário
         sequences = list()
         for sentence in tokenized_text:
             seq = list()
@@ -104,7 +112,11 @@ class Dataset(object):
 
 
     def _save_vocab(self):
-        """Salva vocabulário para futuro carregamento"""
+        """Salva vocabulário para futuro carregamento em um arquivo:
+        NUMERO DE SENTENÇAS
+        SENTENÇAS (uma por linha)
+        NÚMERO DE PALAVRAS NO VOCABULÁRIO
+        DICIONÁRIO PALAVRA%@ÍNDICE"""
 
         if not os.path.exists(self.options.save_path):
             os.mkdir(self.options.save_path)
