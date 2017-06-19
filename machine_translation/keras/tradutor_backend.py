@@ -1,6 +1,6 @@
 import os
+import numpy as np
 from dataset import Dataset
-from keras import utils
 from keras.models import load_model
 from keras.models import Sequential
 from keras.layers import GRU
@@ -52,15 +52,15 @@ class Tradutor(object):
                             self.options.embedding_size,
                             input_length=self.options.sequence_length,
                             mask_zero=True))
-        self.model.add(GRU(hidden_size,
-                      input_shape=(self.options.sequence_length, self.options.embedding_size),
-                      return_sequences=True))
-        self.model.add(GRU(hidden_size,
-                      input_shape=(None, hidden_size),
-                      return_sequences=True))
-        self.model.add(GRU(hidden_size,
-                           input_shape=(None, hidden_size),
-                           return_sequences=True))
+        # self.model.add(GRU(hidden_size,
+        #               input_shape=(self.options.sequence_length, self.options.embedding_size),
+        #               return_sequences=True))
+        # self.model.add(GRU(hidden_size,
+        #               input_shape=(None, hidden_size),
+        #               return_sequences=True))
+        # self.model.add(GRU(hidden_size,
+        #                    input_shape=(None, hidden_size),
+        #                    return_sequences=True))
         self.model.add(GRU(hidden_size,
                            input_shape=(None, hidden_size)))
         self.model.add(Dense(self.options.hidden_size,
@@ -68,15 +68,15 @@ class Tradutor(object):
         self.model.add(Activation('relu'))
         self.model.add(RepeatVector(self.options.sequence_length,
                                input_shape=(None, self.options.hidden_size)))
-        self.model.add(GRU(self.options.hidden_size,
-                      input_shape=(None, self.options.hidden_size),
-                      return_sequences=True))
-        self.model.add(GRU(self.options.hidden_size,
-                      input_shape=(None, self.options.hidden_size),
-                      return_sequences=True))
-        self.model.add(GRU(self.options.hidden_size,
-                      input_shape=(None, self.options.hidden_size),
-                      return_sequences=True))
+        # self.model.add(GRU(self.options.hidden_size,
+        #               input_shape=(None, self.options.hidden_size),
+        #               return_sequences=True))
+        # self.model.add(GRU(self.options.hidden_size,
+        #               input_shape=(None, self.options.hidden_size),
+        #               return_sequences=True))
+        # self.model.add(GRU(self.options.hidden_size,
+        #               input_shape=(None, self.options.hidden_size),
+        #               return_sequences=True))
         self.model.add(GRU(self.options.hidden_size,
                       input_shape=(None, self.options.hidden_size),
                       return_sequences=True))
@@ -89,8 +89,13 @@ class Tradutor(object):
     def train(self):
         """Realiza o treinamento da rede com os dados em dataset."""
 
-        target = [utils.to_categorical(seq, num_classes=self.options.vocabulary_size) for seq in self.dataset.data_en]
-        target = np.array(target)
+        target = np.empty((self.options.sequence_length, self.options.vocabulary_size + 1))
+        for seq in self.dataset.data_en:
+            cat_seq = np.zeros((self.options.sequence_length, self.options.vocabulary_size + 1),
+                               dtype=np.bool)
+            cat_seq[np.arange(self.options.sequence_length), seq] = 1
+            np.vstack((target, cat_seq))
+
 
         print('Iniciando treinamento')
         self.model.fit(self.dataset.data_pt,
