@@ -1,5 +1,6 @@
 import os
 from dataset import Dataset
+from keras import utils
 from keras.models import load_model
 from keras.models import Sequential
 from keras.layers import GRU
@@ -79,14 +80,17 @@ class Tradutor(object):
         self.model.add(GRU(self.options.hidden_size,
                       input_shape=(None, self.options.hidden_size),
                       return_sequences=True))
-        self.model.add(TimeDistributed(Dense(1, activation='softmax'),
-                                  input_shape=(self.options.sequence_length,1)))
-        # self.model.add(Activation('softmax'))
-        self.model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+        self.model.add(TimeDistributed(Dense(self.options.vocabulary_size),
+                                       input_shape=(self.options.sequence_length,1)))
+        self.model.add(Activation('softmax'))
+        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 
     def train(self):
         """Realiza o treinamento da rede com os dados em dataset."""
+
+        target = [utils.to_categorical(seq, num_classes=self.options.vocabulary_size) for seq in self.dataset.data_en]
+        target = np.array(target)
 
         print('Iniciando treinamento')
         self.model.fit(self.dataset.data_pt,
