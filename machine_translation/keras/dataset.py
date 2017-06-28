@@ -2,6 +2,8 @@ import numpy as np
 import codecs
 import re
 import os
+from nltk.tokenize.regexp import RegexpTokenizer
+from collections import Counter
 from itertools import islice
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing import sequence
@@ -9,7 +11,6 @@ from keras.preprocessing import text
 
 
 # TODO: Melhorar Tokenização com o NLTK
-# Tokenização: nltk.tokenize.punkt.PunktLanguageVars -> word_tokenize
 # Stemming: nltk.stem.RSLPStemmer()
 # Formato:
 # Token Token Token Raíz@@ Sufixo Token Token Token...
@@ -69,18 +70,53 @@ class Dataset(object):
     def _create_dataset(self, input_text):
         """Cria o conunto de dados a partir de um texto"""
 
-        tokenizer = Tokenizer(num_words=self.options.vocabulary_size)
-        tokenizer.fit_on_texts(input_text)
-        sequences = tokenizer.texts_to_sequences(input_text)
+        tokenizer = RegexpTokenizer(r'\w+')
 
-        word_index = tokenizer.word_index
-        rev_word_index = dict(zip(word_index.values(), word_index.keys()))
+    # Criação de duas listas:
+    # tokenized_text mantém as sentenças, porém cada sentença está tokenizada
+    # text_words representa todas as palavras do texto tokenizadas, sem sentenças
+        tokenized_text = list()
+        text_words = list()
+        for sentence in input_text:
+            tokenized_sentence = tokenizer.tokenize(sentence.lower())
+            for word in tokenized_sentence:
+                text_words.append(word)
+            tokenized_text.append(tokenized_sentence)
 
-        return sequences, word_index, rev_word_index
+    # count mantém todas as vocabulary_size palavras mais comuns no texto
+    # Estas palavras são utilizadas para criar um dicionário de palavra : índice (word_index)
+    # O índice 0 não é utilizado pois será utilizado no padding
+        count = [['UKN', -1]]
+        count.extend(Counter(text_words).most_common(self.options.vocabulary_size -1))
+
+        word_index = dict()
+        for word, _ in count:
+            word_index[word] = len(word_index) + 1
+
+    # As sentenças são transformadas em sequências de índices,
+    # levando em consideração palavras fora do vocabulário
+        sequences = list()
+        for sentence in tokenized_text:
+            seq = list()
+            for word in sentence:
+                if word in word_index:
+                    index = word_index[word]
+                else:
+                    index = word_index['UKN']
+                seq.append(index)
+            sequences.append(seq)
+
+        index_word = dict(zip(word_index.values(), word_index.keys()))
+
+        return sequences, word_index, index_word
 
 
     def _save_vocab(self):
-        """Salva vocabulário para futuro carregamento"""
+        """Salva vocabulário para futuro carregamento em um arquivo:
+        NUMERO DE SENTENÇAS
+        SENTENÇAS (uma por linha)
+        NÚMERO DE PALAVRAS NO VOCABULÁRIO
+        DICIONÁRIO PALAVRA%@ÍNDICE"""
 
         if not os.path.exists(self.options.save_path):
             os.mkdir(self.options.save_path)
