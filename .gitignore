@@ -94,6 +94,7 @@ ENV/
 # Corpora
 Corpus_FAPESP_pt-en_bitexts
 MNIST_data
+Corpus_FAPESP_v2
 
 # Pycharm
 .idea
@@ -116,3 +117,18 @@ MNIST_data
 
 # Documentos
 documentos
+
+# OpenNMT
+data
+docs
+onmt
+test
+tools
+*.yml
+*.perl*
+*.de*
+*.en*
+preprocess.py
+setup.py
+train.py
+translate.py
