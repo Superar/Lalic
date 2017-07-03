@@ -89,17 +89,23 @@ class Tradutor(object):
     def train(self):
         """Realiza o treinamento da rede com os dados em dataset."""
 
-        target = np.empty((self.options.sequence_length, self.options.vocabulary_size + 1))
+        i = 0
+
+        target = np.array([], dtype=np.float32).reshape(0, self.options.sequence_length, self.options.vocabulary_size + 1)
         for seq in self.dataset.data_en:
+            print('Processando instância número {}'.format(i), end='\r')
+            i = i + 1
             cat_seq = np.zeros((self.options.sequence_length, self.options.vocabulary_size + 1),
                                dtype=np.bool)
             cat_seq[np.arange(self.options.sequence_length), seq] = 1
-            np.vstack((target, cat_seq))
+            target = np.vstack((target, [cat_seq]))
+
+        print('Processando instância número {}'.format(i))
 
 
         print('Iniciando treinamento')
         self.model.fit(self.dataset.data_pt,
-                       self.dataset.data_en,
+                       target,
                        epochs=self.options.iterations)
 
 
