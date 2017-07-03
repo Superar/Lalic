@@ -1,3 +1,7 @@
+#Install python torch
+# pip3 install http://download.pytorch.org/whl/cu80/torch-0.1.12.post2-cp35-cp35m-linux_x86_64.whl
+# pip3 install torchvision
+
 # Download do tokenizador moses
 # wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/tokenizer/tokenizer.perl
 # wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/share/nonbreaking_prefixes/nonbreaking_prefix.de
@@ -5,59 +9,70 @@
 # sed -i "s/$RealBin\/..\/share\/nonbreaking_prefixes//" tokenizer.perl
 # wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/generic/multi-bleu.perl
 
-# Faz download dos dados wmt
-# mkdir -p data/multi30k
-# wget http://www.quest.dcs.shef.ac.uk/wmt16_files_mmt/training.tar.gz &&  tar -xf training.tar.gz -C data/multi30k && rm training.tar.gz
-# wget http://www.quest.dcs.shef.ac.uk/wmt16_files_mmt/validation.tar.gz && tar -xf validation.tar.gz -C data/multi30k && rm validation.tar.gz
-# wget https://staff.fnwi.uva.nl/d.elliott/wmt16/mmt16_task1_test.tgz && tar -xf mmt16_task1_test.tgz -C data/multi30k && rm mmt16_task1_test.tgz
-
-# DATA_PATH=data/multi30k
-# SRC_LAN=en
-# TGT_LAN=de
-DATA_PATH=../../Corpus_FAPESP_pt-en_bitexts
+DATA_PATH=../Corpus_FAPESP_v2
+TRAIN_PATH=$DATA_PATH/corpus_treinamento/pt-en
+TEST_PATH=$DATA_PATH/corpus_teste/pt-en
 SRC_LAN=en
 TGT_LAN=pt
 
-# Retira ultima linha dos arquivos que nao sao de teste
-# Porque eles terminam com duas linhas em branco por algum motivo
-# for l in $SRC_LAN $TGT_LAN
-# do
-#     for f in $DATA_PATH/*.$l
-#     do
-#         if [[ "$f" != *"test"* ]]
-#         then
-#             sed -i "$ d" $f
-#         fi
-#     done
-# done
-
+# mkdir -p $DATA_PATH/nmt_model $TRAIN_PATH/preprocessed
+#
+#
+# # Substitui `` e '' por ""
+# sed -i "s/\`\`/\"/g" $TRAIN_PATH/*.en
+# sed -i "s/''/\"/g" $TRAIN_PATH*.en
+#
 # Tokeniza textos
 for l in $SRC_LAN $TGT_LAN
 do
-    for f in $DATA_PATH/*.$l
+    for f in $TRAIN_PATH/*.$l
     do
         perl tokenizer.perl -a -no-escape -l $l -q  < $f > $f.atok
     done
+
+    for f in $TEST_PATH/*.$l
+    do
+      perl tokenizer.perl -a -no-escape -l $l -q < $f > $f.atok
+    done
 done
 
+# Pre-processamento
 python3 preprocess.py \
-    -train_src $DATA_PATH/fapesp-bitexts.pt-en.en.atok \
-    -train_tgt $DATA_PATH/fapesp-bitexts.pt-en.pt.atok \
-    -valid_src $DATA_PATH/fapesp-bitexts.pt-en.en.atok \
-    -valid_tgt $DATA_PATH/fapesp-bitexts.pt-en.pt.atok \
-    -save_data $DATA_PATH/fapesp-bitexts.atok.low \
+    -train_src $TRAIN_PATH/fapesp-v2.pt-en.train.en.atok \
+    -train_tgt $TRAIN_PATH/fapesp-v2.pt-en.train.pt.atok \
+    -valid_src $TRAIN_PATH/fapesp-v2.pt-en.dev.en.atok \
+    -valid_tgt $TRAIN_PATH/fapesp-v2.pt-en.dev.pt.atok \
+    -save_data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low \
     -lower
-
-python3 train.py \
-    -data $DATA_PATH/fapesp-bitexts.atok.low.train.pt \
-    -save_model $DATA_PATH/tradutor_model \
-    -gpus 0
+#
+# # Treinamento
+# python3 train.py \
+#     -data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low.train.pt \
+#     -save_model $DATA_PATH/nmt_model/fapesp-v2_model \
+#     -gpus 0 \
+#     -optim adam \
+#     -learning_rate 0.001 \
+#     -learning_rate_decay 0.95
+# 
+# Teste
+python3 translate.py \
+    -gpu 0 \
+    -model $DATA_PATH/nmt_model/1/fapesp-v2_model_*_e13.pt \
+    -src $TEST_PATH/fapesp-v2.pt-en.test-a.en.atok \
+    -tgt $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok \
+    -replace_unk \
+    -verbose \
+    -output $TEST_PATH/fapesp-v2.pt-en.test-a.output
 
 python3 translate.py \
     -gpu 0 \
-    -model $DATA_PATH/tradutor_model_e13_*.pt \
-    -src $DATA_PATH/fapesp-bitexts.pt-en.en.atok \
-    -tgt $DATA_PATH/fapesp-bitexts.pt-en.pt.atok \
+    -model $DATA_PATH/nmt_model/1/fapesp-v2_model_*_e13.pt \
+    -src $TEST_PATH/fapesp-v2.pt-en.test-b.en.atok \
+    -tgt $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok \
     -replace_unk \
     -verbose \
-    -output $DATA_PATH/tradutor.test.pred.atok
+    -output $TEST_PATH/fapesp-v2.pt-en.test-b.output
+
+# Calculo BLEU
+perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok < $TEST_PATH/fapesp-v2.pt-en.test-a.output > $TEST_PATH/teste-a.bleu
+perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok < $TEST_PATH/fapesp-v2.pt-en.test-b.output > $TEST_PATH/teste-b.bleu
