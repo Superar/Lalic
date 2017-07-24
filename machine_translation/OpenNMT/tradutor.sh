@@ -15,13 +15,12 @@ TEST_PATH=$DATA_PATH/corpus_teste/pt-en
 SRC_LAN=en
 TGT_LAN=pt
 
-# mkdir -p $DATA_PATH/nmt_model $TRAIN_PATH/preprocessed
-#
-#
-# # Substitui `` e '' por ""
-# sed -i "s/\`\`/\"/g" $TRAIN_PATH/*.en
-# sed -i "s/''/\"/g" $TRAIN_PATH*.en
-#
+mkdir -p $DATA_PATH/nmt_model $TRAIN_PATH/preprocessed
+
+# Substitui `` e '' por ""
+sed -i "s/\`\`/\"/g" $TRAIN_PATH/*.en
+sed -i "s/''/\"/g" $TRAIN_PATH/*.en
+
 # Tokeniza textos
 for l in $SRC_LAN $TGT_LAN
 do
@@ -44,16 +43,13 @@ python3 preprocess.py \
     -valid_tgt $TRAIN_PATH/fapesp-v2.pt-en.dev.pt.atok \
     -save_data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low \
     -lower
-#
-# # Treinamento
-# python3 train.py \
-#     -data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low.train.pt \
-#     -save_model $DATA_PATH/nmt_model/fapesp-v2_model \
-#     -gpus 0 \
-#     -optim adam \
-#     -learning_rate 0.001 \
-#     -learning_rate_decay 0.95
-# 
+
+# Treinamento
+python3 train.py \
+    -data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low.train.pt \
+    -save_model $DATA_PATH/nmt_model/fapesp-v2_model \
+    -gpus 0
+
 # Teste
 python3 translate.py \
     -gpu 0 \
@@ -66,7 +62,7 @@ python3 translate.py \
 
 python3 translate.py \
     -gpu 0 \
-    -model $DATA_PATH/nmt_model/1/fapesp-v2_model_*_e13.pt \
+    -model $DATA_PATH/nmt_model/fapesp-v2_model_*_e13.pt \
     -src $TEST_PATH/fapesp-v2.pt-en.test-b.en.atok \
     -tgt $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok \
     -replace_unk \
