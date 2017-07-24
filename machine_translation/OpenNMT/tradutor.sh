@@ -72,7 +72,11 @@ python3 translate.py \
     -replace_unk \
     -verbose \
     -output $TEST_PATH/fapesp-v2.pt-en.test-b.output
+# Transforma texto para teste em lowercase
+# perl -pe '$_=lc' $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok > $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok.lower
+# perl -pe '$_=lc' $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok > $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok.lower
 
 # Calculo BLEU
-perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok < $TEST_PATH/fapesp-v2.pt-en.test-a.output > $TEST_PATH/teste-a.bleu
-perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok < $TEST_PATH/fapesp-v2.pt-en.test-b.output > $TEST_PATH/teste-b.bleu
+perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok.lower < $TEST_PATH/2/fapesp-v2.pt-en.test-a.output > $TEST_PATH/2/teste-a.bleu
+perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok.lower < $TEST_PATH/2/fapesp-v2.pt-en.test-b.output > $TEST_PATH/2/teste-b.bleu
+
