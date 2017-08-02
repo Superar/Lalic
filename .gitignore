@@ -128,6 +128,7 @@ tools
 *.perl*
 *.de*
 *.en*
+*.pt*
 preprocess.py
 setup.py
 train.py
