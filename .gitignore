@@ -123,7 +123,6 @@ data
 docs
 onmt
 test
-tools
 *.yml
 *.perl*
 *.de*
