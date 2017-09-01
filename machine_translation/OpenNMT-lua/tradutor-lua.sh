@@ -15,7 +15,7 @@ TGT_LAN=pt # Lingua alvo
 cd $PROJ_DIR_PATH
 # mkdir -p $TRAIN_PATH
 # mkdir -p $TEST_PATH
-mkdir -p $TOOLS_PATH
+# mkdir -p $TOOLS_PATH
 
 
 ### DOWNLOADS
@@ -34,27 +34,29 @@ mkdir -p $TOOLS_PATH
 
 # Download e instalacao do toolkit OpenNMT
 # git clone https://github.com/OpenNMT/OpenNMT.git
-# luarocks install tds
+# ~/torch/install/bin/luarocks install tds
 
 
 ### PREPROCESSAMENTO
 
 # Substitui `` e '' por "
-echo "Substituindo \`\` e ''"
-sed -i "s/\`\`/\"/g" $DATA_PATH/$TRAIN_PATH/*.en
-sed -i "s/''/\"/g" $DATA_PATH/$TRAIN_PATH/*.en
+# echo "Substituindo \`\` e ''"
+# sed -i "s/\`\`/\"/g" $DATA_PATH/$TRAIN_PATH/*.en
+# sed -i "s/''/\"/g" $DATA_PATH/$TRAIN_PATH/*.en
 
 # Tokeniza textos
-echo "Tokenizando textos"
-for l in $SRC_LAN $TGT_LAN
-do
-  for f in $DATA_PATH/$TRAIN_PATH/*.$l
-  do
-    # perl $TOOLS_PATH/tokenizer.perl -a -no-escape -l $l -q  < $DATA_PATH/$f > $f.atok
-  done
-
-  # for f in $TEST_PATH/*.$l
-  # do
-  #   perl $TOOLS_PATH/tokenizer.perl -a -no-escape -l $l -q < $DATA_PATH/$f > $f.atok
-  # done
-done
+# echo "Tokenizando textos"
+# for l in $SRC_LAN $TGT_LAN
+# do
+#     for f in $DATA_PATH/$TRAIN_PATH/*.$l
+#     do
+#         echo "Processando treinamento: " $(basename $f)
+#         perl $TOOLS_PATH/tokenizer.perl -a -no-escape -l $l -q  < $f > $TRAIN_PATH/$(basename $f).atok
+#     done
+#
+#     for f in $DATA_PATH/$TEST_PATH/*.$l
+#     do
+#         echo "Processando teste: " $(basename $f)
+#       perl $TOOLS_PATH/tokenizer.perl -a -no-escape -l $l -q < $f > $TEST_PATH/$(basename $f).atok
+#     done
+# done
