@@ -3,6 +3,7 @@
 PROJ_DIR_PATH=fapesp-en-pt # Diretorio do projeto
 DATA_PATH=../../Corpus_FAPESP_v2 # Diretorio da base de dados
 TRAIN_PATH=corpus_treinamento/pt-en # Diretorio dos dados para treinamento
+TRAIN_PROCESSED_PATH=$TRAIN_PATH/processed_data # Diretorio com os dados processados para treinamento
 TEST_PATH=corpus_teste/pt-en # Diretorio dos dados para teste
 TOOLS_PATH=moses_tools # Diretorio com ferramentas e utilitarios
 OPENNMT_PATH=OpenNMT
@@ -14,6 +15,7 @@ TGT_LAN=pt # Lingua alvo
 # mkdir -p $PROJ_DIR_PATH
 cd $PROJ_DIR_PATH
 # mkdir -p $TRAIN_PATH
+mkdir -p $TRAIN_PROCESSED_PATH
 # mkdir -p $TEST_PATH
 # mkdir -p $TOOLS_PATH
 
@@ -23,6 +25,8 @@ cd $PROJ_DIR_PATH
 # git clone https://github.com/torch/distro.git ~/torch --recursive
 # cd ~/torch; bash install-deps;
 # ./install.sh
+alias th="~/torch/install/bin/th"
+alias luarocks="~/torch/install/bin/luarocks"
 
 # Download e instalacao de utilidades do Moses
 # cd $TOOLS_PATH
@@ -34,7 +38,7 @@ cd $PROJ_DIR_PATH
 
 # Download e instalacao do toolkit OpenNMT
 # git clone https://github.com/OpenNMT/OpenNMT.git
-# ~/torch/install/bin/luarocks install tds
+# luarocks install tds
 
 
 ### PREPROCESSAMENTO
