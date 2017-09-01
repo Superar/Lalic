@@ -39,6 +39,8 @@ alias luarocks="~/torch/install/bin/luarocks"
 # Download e instalacao do toolkit OpenNMT
 # git clone https://github.com/OpenNMT/OpenNMT.git
 # luarocks install tds
+luarocks install onmt
+luarocks install bit32
 
 
 ### PREPROCESSAMENTO
@@ -64,3 +66,11 @@ alias luarocks="~/torch/install/bin/luarocks"
 #       perl $TOOLS_PATH/tokenizer.perl -a -no-escape -l $l -q < $f > $TEST_PATH/$(basename $f).atok
 #     done
 # done
+
+# Criação dos dicionários
+th $OPENNMT_PATH/preprocess.lua \
+    -train_src $TRAIN_PATH/fapesp-v2.pt-en.train.en.atok \
+    -train_tgt $TRAIN_PATH/fapesp-v2.pt-en.train.pt.atok \
+    -valid_src $TRAIN_PATH/fapesp-v2.pt-en.dev.en.atok \
+    -valid_tgt $TRAIN_PATH/fapesp-v2.pt-en.dev.pt.atok \
+    -save_data $TRAIN_PROCESSED_PATH
