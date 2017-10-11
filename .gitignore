@@ -134,3 +134,6 @@ setup.py
 train.py
 translate.py
 mteval-v13a.pl
+
+# Model files
+*_model*
