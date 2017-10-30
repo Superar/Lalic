@@ -4,6 +4,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import os
 import subprocess
+import string
 
 
 class WordEmbeddings(object):
@@ -38,9 +39,13 @@ class WordEmbeddings(object):
             raw_sentences = tokenizer_process.stdout.readlines()
             tokenizer_process.stdout.close()
 
-        # Lowercase and format [['first', 'sentence'], ['second', 'sentence']]
+        # Lowercase and remove punctuation
+        # format [['first', 'sentence'], ['second', 'sentence']]
+
+        table = str.maketrans('', '', string.punctuation)
         for sentence in raw_sentences:
-            self.sentences.append(sentence.decode('utf-8').lower().split())
+            new_sentence = sentence.decode('utf-8').lower().translate(table)
+            self.sentences.append(new_sentence.split())
 
     def train_word2vec(self):
         ''' Training of the word2vec model '''
