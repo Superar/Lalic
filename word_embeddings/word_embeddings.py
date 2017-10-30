@@ -1,6 +1,7 @@
 from gensim.models.word2vec import Word2Vec
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.manifold import TSNE
+from nltk.tokenize.moses import MosesTokenizer
 import matplotlib.pyplot as plt
 import os
 import subprocess
@@ -127,3 +128,4 @@ class WordEmbeddings(object):
 embedder = WordEmbeddings()
 embedder.load_word2vec()
 embedder.plot()
+print(MosesTokenizer(lang='pt').tokenize('Oi, tudo bem? Estou testando esse ``tokenizador\'\''))
