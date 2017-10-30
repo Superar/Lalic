@@ -3,8 +3,6 @@ from gensim.models.keyedvectors import KeyedVectors
 from sklearn.manifold import TSNE
 from nltk.tokenize.moses import MosesTokenizer
 import matplotlib.pyplot as plt
-import os
-import subprocess
 import string
 
 
@@ -17,36 +15,24 @@ class WordEmbeddings(object):
     def __init__(self):
         self.sentences = []
 
-    def process_sentences(self, corpus_path, tokenizer_path):
+    def process_sentences(self, corpus_path):
         ''' Data preprocessing. Tokenization.
 
-        corpus_path - Path to the text
-        tokenizer_path - Path to the perl tokenizer from Moses '''
+        corpus_path - Path to the text. One sentence per line
 
-        # Tokenizer must exist
-        if not os.path.isfile(tokenizer_path):
-            raise(FileNotFoundError('[Errno ' + str(os.errno.ENOENT) + '] ' +
-                                    'No such file or directory: ' +
-                                    '\'' + tokenizer_path + '\''))
-        # Tokenization
-        with open(corpus_path, 'rb') as _file:
-            tokenizer_process = subprocess.Popen(['perl', tokenizer_path,
-                                                  '-a',
-                                                  '-no-escape',
-                                                  '-l', 'pt',
-                                                  '-q'],
-                                                 stdin=_file,
-                                                 stdout=subprocess.PIPE)
-            raw_sentences = tokenizer_process.stdout.readlines()
-            tokenizer_process.stdout.close()
+        The tokenized sentences are stored at ``self.sentences`` in
+        the format of [['first', 'sentence'], ['second', 'sentence']]
+        '''
 
-        # Lowercase and remove punctuation
-        # format [['first', 'sentence'], ['second', 'sentence']]
-
+        tokenizer = MosesTokenizer(lang='pt')
         table = str.maketrans('', '', string.punctuation)
-        for sentence in raw_sentences:
-            new_sentence = sentence.decode('utf-8').lower().translate(table)
-            self.sentences.append(new_sentence.split())
+
+        with open(corpus_path, 'r') as _file:
+            for sent in _file:
+                # Lowercase and remove punctuation
+                proc_sent = sent.lower().translate(table)
+                tok_sent = tokenizer.tokenize(proc_sent, return_str=True)
+                self.sentences.append(tok_sent.split())
 
     def train_word2vec(self):
         ''' Training of the word2vec model '''
@@ -93,7 +79,8 @@ class WordEmbeddings(object):
     def plot_n_most_similar(self, word, n=10,
                             filename='word2vec_most_similar.png'):
         ''' Plot the n most close embeddings from ``word``.
-        This uses the cossine distance as a measure of how close the words are. '''
+        This uses the cossine distance as a measure of how close the words are.
+        '''
 
         plot_data = [self.word2vec_model[word]]
         data_label = [word]
