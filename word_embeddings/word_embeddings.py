@@ -89,6 +89,35 @@ class WordEmbeddings(object):
                          va='bottom')
         plt.savefig(filename)
 
+    def plot_n_most_similar(self, word, n=10,
+                            filename='word2vec_most_similar.png'):
+        ''' Plot the n most close embeddings from ``word``.
+        This uses the cossine distance as a measure of how close the words are. '''
+
+        plot_data = [self.word2vec_model[word]]
+        data_label = [word]
+
+        for (word, _) in self.word2vec_model.most_similar(positive=[word],
+                                                          topn=n):
+            plot_data.append(self.word2vec_model[word])
+            data_label.append(word)
+
+        tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
+        low_dim_data = tsne.fit_transform(plot_data)
+
+        # Plot
+        plt.figure(figsize=(18, 18))
+        for i, word in enumerate(data_label):
+            x, y = low_dim_data[i, :]
+            plt.scatter(x, y)
+            plt.annotate(word,
+                         xy=(x, y),
+                         xytext=(5, 2),
+                         textcoords='offset points',
+                         ha='right',
+                         va='bottom')
+        plt.savefig(filename)
+
 
 # embedder = WordEmbeddings()
 # embedder.process_sentences('../Corpus_FAPESP_pt-en_bitexts/fapesp-bitexts.pt-en.pt',
