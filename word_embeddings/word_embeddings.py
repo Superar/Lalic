@@ -3,6 +3,7 @@ from gensim.models.keyedvectors import KeyedVectors
 from sklearn.manifold import TSNE
 from nltk.tokenize.moses import MosesTokenizer
 import matplotlib.pyplot as plt
+import numpy as np
 import string
 
 
@@ -34,10 +35,10 @@ class WordEmbeddings(object):
                 tok_sent = tokenizer.tokenize(proc_sent, return_str=True)
                 self.sentences.append(tok_sent.split())
 
-    def train_word2vec(self):
+    def train_word2vec(self, dim=100):
         ''' Training of the word2vec model '''
 
-        model = Word2Vec(self.sentences)
+        model = Word2Vec(self.sentences, size=100)
         # The embeddings are stored at word2vec_model
         self.word2vec_model = model.wv
         del model
@@ -92,11 +93,13 @@ class WordEmbeddings(object):
 
         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
         low_dim_data = tsne.fit_transform(plot_data)
+        ref = low_dim_data[0]
+        trans_low_dim_data = np.array([d - ref for d in low_dim_data])
 
         # Plot
         plt.figure(figsize=(18, 18))
         for i, word in enumerate(data_label):
-            x, y = low_dim_data[i, :]
+            x, y = trans_low_dim_data[i, :]
             plt.scatter(x, y)
             plt.annotate(word,
                          xy=(x, y),
