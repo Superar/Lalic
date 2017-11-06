@@ -42,16 +42,15 @@ class Tradutor(object):
 
         print(self.model.summary())
 
-
     def _build_model(self):
         """Constrói o modelo de rede neural."""
 
         hidden_size = self.options.hidden_size
 
         self.model.add(Embedding(self.options.vocabulary_size,
-                            self.options.embedding_size,
-                            input_length=self.options.sequence_length,
-                            mask_zero=True))
+                                 self.options.embedding_size,
+                                 input_length=self.options.sequence_length,
+                                 mask_zero=True))
         # self.model.add(GRU(hidden_size,
         #               input_shape=(self.options.sequence_length, self.options.embedding_size),
         #               return_sequences=True))
@@ -64,10 +63,10 @@ class Tradutor(object):
         self.model.add(GRU(hidden_size,
                            input_shape=(None, hidden_size)))
         self.model.add(Dense(self.options.hidden_size,
-                        input_shape=(None, hidden_size)))
+                             input_shape=(None, hidden_size)))
         self.model.add(Activation('relu'))
         self.model.add(RepeatVector(self.options.sequence_length,
-                               input_shape=(None, self.options.hidden_size)))
+                                    input_shape=(None, self.options.hidden_size)))
         # self.model.add(GRU(self.options.hidden_size,
         #               input_shape=(None, self.options.hidden_size),
         #               return_sequences=True))
@@ -78,13 +77,13 @@ class Tradutor(object):
         #               input_shape=(None, self.options.hidden_size),
         #               return_sequences=True))
         self.model.add(GRU(self.options.hidden_size,
-                      input_shape=(None, self.options.hidden_size),
-                      return_sequences=True))
+                           input_shape=(None, self.options.hidden_size),
+                           return_sequences=True))
         self.model.add(TimeDistributed(Dense(self.options.vocabulary_size),
-                                       input_shape=(self.options.sequence_length,1)))
+                                       input_shape=(self.options.sequence_length, 1)))
         self.model.add(Activation('softmax'))
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
+        self.model.compile(optimizer='adam', loss='categorical_crossentropy',
+                           metrics=['accuracy'])
 
     def train(self):
         """Realiza o treinamento da rede com os dados em dataset."""
@@ -95,29 +94,29 @@ class Tradutor(object):
         for seq in self.dataset.data_en:
             print('Processando instância número {}'.format(i), end='\r')
             i = i + 1
-            cat_seq = np.zeros((self.options.sequence_length, self.options.vocabulary_size + 1),
+            cat_seq = np.zeros((self.options.sequence_length,
+                                self.options.vocabulary_size + 1),
                                dtype=np.bool)
             cat_seq[np.arange(self.options.sequence_length), seq] = 1
             target = np.vstack((target, [cat_seq]))
 
         print('Processando instância número {}'.format(i))
 
-
         print('Iniciando treinamento')
         self.model.fit(self.dataset.data_pt,
                        target,
                        epochs=self.options.iterations)
 
-
     def save(self):
         """Salva o modelo em um arquivo SAVE_PATH/modelo.h5"""
         print('Salvando modelo')
-        self.model.save(os.path.join(self.options.save_path, 'modelo.h5'), overwrite=True)
-
+        self.model.save(os.path.join(self.options.save_path, 'modelo.h5'),
+                        overwrite=True)
 
     def evaluate(self):
         """Imprime na tela os scores do modelo sendo: [loss, accuracy]"""
         print('Avaliando modelo')
         self.model.reset_states()
-        scores = self.model.evaluate(self.dataset.data_pt, self.dataset.data_en)
+        scores = self.model.evaluate(self.dataset.data_pt,
+                                     self.dataset.data_en)
         print(scores)
