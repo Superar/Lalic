@@ -12,7 +12,8 @@ class WordEmbeddings(object):
     def __init__(self):
         self.model = None
 
-    def process_sentences(self, lang, corpus_path):
+    @staticmethod
+    def process_sentences(lang, corpus_path):
         ''' Pre-processamento dos dados. Toquenizacao.
 
         ``lang`` - Idioma para a tokenizacao.
@@ -35,9 +36,6 @@ class WordEmbeddings(object):
                 tokenized_sentences.append(tok_sent.split())
 
         return tokenized_sentences
-
-    def train(self, lang1, corpus_path1, dim, lang2=None, corpus_path2=None):
-        raise NotImplementedError
 
     def save(self, filename):
         raise NotImplementedError

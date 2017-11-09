@@ -6,9 +6,10 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 class Word2VecModel(WordEmbeddings):
     ''' Classe para operacoes com relacao ao modelo de word embeddings
-        word2vec. As embeddings sao calculadas a partir de ``src_sentences`'
+        word2vec. As embeddings sao calculadas a partir de ``src_sentences``
     '''
 
     def __init__(self):
@@ -18,7 +19,7 @@ class Word2VecModel(WordEmbeddings):
     def train(self, lang, corpus_path, dim=100):
         ''' Treinamendo do modelo Word2Vec '''
 
-        self.sentences = self.process_sentences(lang, corpus_path)
+        self.sentences = WordEmbeddings.process_sentences(lang, corpus_path)
 
         model_word2vec = Word2Vec(self.sentences, size=dim)
         # As embeddings serao salvas em ``modelo``
