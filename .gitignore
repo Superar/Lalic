@@ -137,3 +137,6 @@ mteval-v13a.pl
 
 # Model files
 *_model*
+
+# Visual Studio Code
+.vscode
