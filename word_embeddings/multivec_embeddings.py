@@ -37,10 +37,10 @@ class MultivecModel(WordEmbeddings):
         tgt_file.close()
 
     def save(self, filename='model_multivec.txt'):
-        pass
+        self.model.save(filename)
 
     def load(self, filename='model_multivec.txt'):
-        pass
+        self.model = BilingualModel(name=filename)
 
     def plot(self, filename='word_embeddings_multivec.png', num_points=500):
         pass
