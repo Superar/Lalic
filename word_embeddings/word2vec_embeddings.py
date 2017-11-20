@@ -56,6 +56,8 @@ class Word2VecModel(WordEmbeddings):
         Usa a distancia de cosseno como medida do quao proximas sao as palavras.
         '''
 
+        word = word.decode('utf8')
+
         plot_vectors = [self.model[word]]
         data_label = [word]
 
