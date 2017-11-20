@@ -3,6 +3,7 @@
 from tempfile import NamedTemporaryFile
 from word_embeddings import WordEmbeddings
 from multivec import BilingualModel # pylint: disable=E0611
+import matplotlib.pyplot as plt
 
 class MultivecModel(WordEmbeddings):
 
@@ -42,5 +43,21 @@ class MultivecModel(WordEmbeddings):
     def load(self, filename='model_multivec.txt'):
         self.model = BilingualModel(name=filename)
 
-    def plot(self, filename='word_embeddings_multivec.png', num_points=500):
-        pass
+    def plot(self, filename='word_embeddings_multivec', num_points=500):
+        fig_src = plt.figure(figsize=(18, 18))
+        graphic_src = fig_src.add_subplot(111)
+        fig_tgt = plt.figure(figsize=(18, 18))
+        graphic_tgt = fig_tgt.add_subplot(111)
+
+        data_labels_src = self.model.src_model.get_vocabulary()[:num_points]
+        plot_vectors_src = [self.model.src_model.word_vec(w) for w in data_labels_src]
+        data_src = dict(zip(data_labels_src, plot_vectors_src))
+        self._scatter_data(graphic_src, data_src)
+
+        data_labels_tgt = self.model.trg_model.get_vocabulary()[:num_points]
+        plot_vectors_tgt = [self.model.trg_model.word_vec(w) for w in data_labels_tgt]
+        data_tgt = dict(zip(data_labels_tgt, plot_vectors_tgt))
+        self._scatter_data(graphic_tgt, data_tgt)
+
+        fig_src.savefig(filename + 'src.png')
+        fig_tgt.savefig(filename + 'tgt.png')
