@@ -1,7 +1,8 @@
 # pylint: disable=C0111
 # pylint: disable=R0913
+from tempfile import NamedTemporaryFile
 from word_embeddings import WordEmbeddings
-from multivec import BilingualModel
+from multivec import BilingualModel # pylint: disable=E0611
 
 class MultivecModel(WordEmbeddings):
 
@@ -14,26 +15,26 @@ class MultivecModel(WordEmbeddings):
               corpus_path_src, corpus_path_tgt,
               dim=100):
 
-        # self.sentences_src = WordEmbeddings.process_sentences(lang_src, corpus_path_src)
-        # self.sentences_tgt = WordEmbeddings.process_sentences(lang_tgt, corpus_path_tgt)
+        self.sentences_src = WordEmbeddings.process_sentences(lang_src, corpus_path_src)
+        self.sentences_tgt = WordEmbeddings.process_sentences(lang_tgt, corpus_path_tgt)
 
-        # src_file = open('src_file.' + lang_src, 'w')
-        # tgt_file = open('tgt_file.' + lang_tgt, 'w')
+        src_file = NamedTemporaryFile(mode='w')
+        tgt_file = NamedTemporaryFile(mode='w')
 
-        # for sentence in self.sentences_src:
-        #     src_file.write(' '.join(sentence))
-        #     src_file.write('\n')
+        for sentence in self.sentences_src:
+            src_file.write(' '.join(sentence))
+            src_file.write('\n')
 
-        # for sentence in self.sentences_tgt:
-        #     tgt_file.write(' '.join(sentence))
-        #     tgt_file.write('\n')
-
-        # src_file.close()
-        # tgt_file.close()
+        for sentence in self.sentences_tgt:
+            tgt_file.write(' '.join(sentence))
+            tgt_file.write('\n')
 
         self.model = BilingualModel(dimension=dim, threads=16)
-        self.model.train('src_file.' + lang_src,
-                         'tgt_file.' + lang_tgt)
+        self.model.train(src_file.name,
+                         tgt_file.name)
+
+        src_file.close()
+        tgt_file.close()
 
     def save(self, filename='model_multivec.txt'):
         pass
