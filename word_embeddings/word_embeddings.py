@@ -56,7 +56,7 @@ class WordEmbeddings(object):
         for i, word in enumerate(data):
             (x, y) = low_dim_data[i, :] # pylint: disable=C0103
             fig.scatter(x, y)
-            fig.annotate(word,
+            fig.annotate(word.decode('utf-8'),
                          xy=(x, y),
                          xytext=(5, 2),
                          textcoords='offset points',
