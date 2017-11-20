@@ -2,9 +2,7 @@
 from word_embeddings import WordEmbeddings
 from gensim.models import Word2Vec
 from gensim.models.word2vec import KeyedVectors
-from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class Word2VecModel(WordEmbeddings):
@@ -42,23 +40,15 @@ class Word2VecModel(WordEmbeddings):
         para um espaco de 2 dimensoes. '''
 
         # Usa t-SNE para fazer as projecoes
-        plot_data = [self.model[word]
-                     for word in self.model.index2word[:num_points]]
-        tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
-        low_dim_data = tsne.fit_transform(plot_data)
+        plot_vectors = [self.model[word]
+                        for word in self.model.index2word[:num_points]]
+        data = dict(zip(self.model.index2word[:num_points], plot_vectors))
 
         # Plot
-        plt.figure(figsize=(18, 18))
-        for i, word in enumerate(self.model.index2word[:num_points]):
-            (x, y) = low_dim_data[i, :] # pylint: disable=C0103
-            plt.scatter(x, y)
-            plt.annotate(word,
-                         xy=(x, y),
-                         xytext=(5, 2),
-                         textcoords='off points',
-                         ha='right',
-                         va='bottom')
-        plt.savefig(filename)
+        fig = plt.figure(figsize=(18, 18))
+        graphics = fig.add_subplot(111)
+        self._scatter_data(graphics, data)
+        fig.savefig(filename)
 
     def plot_n_most_similar(self, word, num_neighbours=10,
                             filename='word2vec_most_similar.png'):
@@ -66,28 +56,19 @@ class Word2VecModel(WordEmbeddings):
         Usa a distancia de cosseno como medida do quao proximas sao as palavras.
         '''
 
-        plot_data = [self.model[word]]
+        plot_vectors = [self.model[word]]
         data_label = [word]
 
         for (_word, _) in self.model.most_similar(positive=[word],
                                                   topn=num_neighbours):
-            plot_data.append(self.model[_word])
+            plot_vectors.append(self.model[_word])
             data_label.append(_word)
 
-        tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
-        low_dim_data = tsne.fit_transform(plot_data)
-        ref = low_dim_data[0]
-        trans_low_dim_data = np.array([d - ref for d in low_dim_data])
+        ref = plot_vectors[0]
+        trans_data = [d - ref for d in plot_vectors]
+        data = dict(zip(data_label, trans_data))
 
-        # Plot
-        plt.figure(figsize=(18, 18))
-        for i, _word in enumerate(data_label):
-            (x, y) = trans_low_dim_data[i, :] # pylint: disable=C0103
-            plt.scatter(x, y)
-            plt.annotate(_word,
-                         xy=(x, y),
-                         xytext=(5, 2),
-                         textcoords='offset points',
-                         ha='right',
-                         va='bottom')
-        plt.savefig(filename)
+        fig = plt.figure(figsize=(18, 18))
+        graphics = fig.add_subplot(111)
+        self._scatter_data(graphics, data)
+        fig.savefig(filename)

@@ -2,6 +2,7 @@
 import string
 import sys
 from nltk.tokenize.moses import MosesTokenizer
+from sklearn.manifold import TSNE
 
 
 class WordEmbeddings(object):
@@ -48,3 +49,19 @@ class WordEmbeddings(object):
 
     def plot(self, filename, num_points):
         raise NotImplementedError
+
+    @staticmethod
+    def _scatter_data(fig, data):
+        tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
+        low_dim_data = tsne.fit_transform(data.values())
+
+        # Plot
+        for i, word in enumerate(data):
+            (x, y) = low_dim_data[i, :] # pylint: disable=C0103
+            fig.scatter(x, y)
+            fig.annotate(word,
+                         xy=(x, y),
+                         xytext=(5, 2),
+                         textcoords='offset points',
+                         ha='right',
+                         va='bottom')
