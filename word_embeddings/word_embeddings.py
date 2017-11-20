@@ -1,6 +1,5 @@
 # pylint: disable=C0111
 import string
-import sys
 from nltk.tokenize.moses import MosesTokenizer
 from sklearn.manifold import TSNE
 
@@ -27,15 +26,13 @@ class WordEmbeddings(object):
 
         tokenized_sentences = list()
 
-        reload(sys)
-        sys.setdefaultencoding('utf8')
         tokenizer = MosesTokenizer(lang=lang)
-        # table = str.maketrans('', '', string.punctuation)
 
         with open(corpus_path, 'r') as _file:
             for sent in _file:
+                sent = sent.decode('utf8')
                 # Lowercase e retira pontuacao
-                proc_sent = sent.lower().translate(None, string.punctuation)
+                proc_sent = ''.join(c for c in sent.lower() if c not in string.punctuation)
                 tok_sent = tokenizer.tokenize(proc_sent, return_str=True)
                 tokenized_sentences.append(tok_sent.split())
 
