@@ -34,7 +34,7 @@ class Word2VecModel(WordEmbeddings):
 
         self.model = KeyedVectors.load_word2vec_format(filename)
 
-    def plot(self, filename='word_embeddings_word2vec.png', num_points=500):
+    def plot(self, filename='word_embeddings_word2vec.png', num_points=500, figsize=(18, 18)):
         ''' Traca o grafico com os vetores das palavras.
         Uso o modelo t-SNE do modulo sklearn para projetar os vetores
         para um espaco de 2 dimensoes. '''
@@ -45,13 +45,14 @@ class Word2VecModel(WordEmbeddings):
         data = dict(zip(self.model.index2word[:num_points], plot_vectors))
 
         # Plot
-        fig = plt.figure(figsize=(18, 18))
+        fig = plt.figure(figsize=figsize)
         graphics = fig.add_subplot(111)
         self._scatter_data(graphics, data)
         fig.savefig(filename)
 
     def plot_n_most_similar(self, word, num_neighbours=10,
-                            filename='word2vec_most_similar.png'):
+                            filename='word2vec_most_similar.png',
+                            figsize=(18, 18)):
         ''' Traca o grafico com as n embeddings mais proximas de ``word``.
         Usa a distancia de cosseno como medida do quao proximas sao as palavras.
         '''
@@ -59,18 +60,18 @@ class Word2VecModel(WordEmbeddings):
         word = word.decode('utf8')
 
         plot_vectors = [self.model[word]]
-        data_label = [word]
+        data_label = [word.encode('utf-8')]
 
         for (_word, _) in self.model.most_similar(positive=[word],
                                                   topn=num_neighbours):
             plot_vectors.append(self.model[_word])
-            data_label.append(_word)
+            data_label.append(_word.encode('utf-8'))
 
         ref = plot_vectors[0]
         trans_data = [d - ref for d in plot_vectors]
         data = dict(zip(data_label, trans_data))
 
-        fig = plt.figure(figsize=(18, 18))
+        fig = plt.figure(figsize=figsize)
         graphics = fig.add_subplot(111)
         self._scatter_data(graphics, data)
         fig.savefig(filename)
