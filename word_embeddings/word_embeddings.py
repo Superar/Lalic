@@ -18,6 +18,7 @@ class WordEmbeddings(object):
         ''' Pre-processamento dos dados. Toquenizacao.
 
         ``lang`` - Idioma para a tokenizacao.
+
         ``corpus_path`` - Caminho para o texto. Uma sentenca por linha.
 
         As sentencas tokenizadas sao retornadas no formato:

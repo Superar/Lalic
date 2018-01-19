@@ -40,9 +40,10 @@ class Word2VecModel(WordEmbeddings):
         para um espaco de 2 dimensoes. '''
 
         # Usa t-SNE para fazer as projecoes
+        data_labels = [word.encode('utf-8') for word in self.model.index2word[:num_points]]
         plot_vectors = [self.model[word]
                         for word in self.model.index2word[:num_points]]
-        data = dict(zip(self.model.index2word[:num_points], plot_vectors))
+        data = dict(zip(data_labels, plot_vectors))
 
         # Plot
         fig = plt.figure(figsize=figsize)

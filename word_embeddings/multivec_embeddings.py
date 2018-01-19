@@ -43,10 +43,10 @@ class MultivecModel(WordEmbeddings):
     def load(self, filename='model_multivec.txt'):
         self.model = BilingualModel(name=filename)
 
-    def plot(self, filename='word_embeddings_multivec', num_points=500):
-        fig_src = plt.figure(figsize=(18, 18))
+    def plot(self, filename='word_embeddings_multivec', num_points=500, figsize=(18, 18)):
+        fig_src = plt.figure(figsize=figsize)
         graphic_src = fig_src.add_subplot(111)
-        fig_tgt = plt.figure(figsize=(18, 18))
+        fig_tgt = plt.figure(figsize=figsize)
         graphic_tgt = fig_tgt.add_subplot(111)
 
         data_labels_src = self.model.src_model.get_vocabulary()[:num_points]
