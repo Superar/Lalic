@@ -23,11 +23,11 @@ class MultivecModel(WordEmbeddings):
         tgt_file = NamedTemporaryFile(mode='w')
 
         for sentence in self.sentences_src:
-            src_file.write(' '.join(sentence))
+            src_file.write(' '.join(sentence).encode('utf8'))
             src_file.write('\n')
 
         for sentence in self.sentences_tgt:
-            tgt_file.write(' '.join(sentence))
+            tgt_file.write(' '.join(sentence).encode('utf8'))
             tgt_file.write('\n')
 
         self.model = BilingualModel(dimension=dim, threads=16)
@@ -61,3 +61,17 @@ class MultivecModel(WordEmbeddings):
 
         fig_src.savefig(filename + 'src.png')
         fig_tgt.savefig(filename + 'tgt.png')
+
+    def get_most_similar_src(self, word):
+        try:
+            similar_words = [w[0] for w in self.model.src_closest(word)]
+        except RuntimeError:
+            similar_words = ['***']
+        return similar_words
+
+    def get_most_similar_tgt(self, word):
+        try:
+            similar_words = [w[0] for w in self.model.trg_closest(word)]
+        except RuntimeError:
+            similar_words = ['***']
+        return similar_words
