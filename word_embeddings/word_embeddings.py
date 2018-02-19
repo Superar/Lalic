@@ -44,7 +44,7 @@ class WordEmbeddings(object):
     def load(self, filename):
         raise NotImplementedError
 
-    def plot(self, filename, num_points):
+    def plot(self, filename, num_points, figsize):
         raise NotImplementedError
 
     @staticmethod
