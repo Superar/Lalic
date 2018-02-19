@@ -74,3 +74,12 @@ class Word2VecModel(WordEmbeddings):
         graphics = fig.add_subplot(111)
         self._scatter_data(graphics, data)
         fig.savefig(filename)
+
+    def get_most_similar_word(self, word):
+        try:
+            closest_word = self.model.most_similar(positive=[word],
+                                        topn=1)[0][0]
+        except KeyError:
+            closest_word = '***'
+            
+        return closest_word
