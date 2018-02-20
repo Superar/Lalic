@@ -24,7 +24,7 @@ class BlastReader(object):
                 errors = [e.split('#') for e in blast_file.readline().split()]
 
                 for error in errors:
-                    error_indexes = [map(int, e.split(',')) for e in error[:-1]]
+                    error_indexes = [list(map(int, e.split(','))) for e in error[:-1]]
                     error_indexes.append(error[-1])
                     self.__error_lines.append((line, error_indexes))
 
