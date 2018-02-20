@@ -13,15 +13,15 @@ class BlastReader(object):
             line = 0
 
             while True:
-                src = blast_file.readline().decode('utf-8').split()
+                src = blast_file.readline().split()
                 if not src:
                     break
 
                 self.src_lines.append(src)
-                self.ref_lines.append(blast_file.readline().decode('utf-8').split())
-                self.sys_lines.append(blast_file.readline().decode('utf-8').split())
+                self.ref_lines.append(blast_file.readline().split())
+                self.sys_lines.append(blast_file.readline().split())
                 blast_file.readline()
-                errors = [e.split('#') for e in blast_file.readline().decode('utf-8').split()]
+                errors = [e.split('#') for e in blast_file.readline().split()]
 
                 for error in errors:
                     error_indexes = [map(int, e.split(',')) for e in error[:-1]]
