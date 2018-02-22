@@ -6,6 +6,7 @@ import tkinter.messagebox as msgb
 import tkinter.filedialog as fdialog
 sys.path.insert(0, '/home/marciolima/Documentos/Lalic/word_embeddings')
 from read_blast import BlastReader
+from read_ape import ApeReader
 from read_muse_embeds import load_embeddings, closest_words
 
 BLAST_FILE_PATH = '/home/marciolima/Dropbox/Marcio/Tarefas/1.Anotacao_erros_corpus_NMT/Blast/Entrada_Blast/test-a/FAPESP_NMT_test-a_truecased.txt'
@@ -16,6 +17,8 @@ MUSE_PT_FILE_PATH = '/home/marciolima/MUSE/dumped/gq0uc5nw4m/vectors-pt.txt'
 class Application(object):
     def __init__(self, master=None):
         master.title('Pós-edição automática')
+
+        self.cur_line = -1
 
         # Menu
         self.menubar = tk.Menu(master)
@@ -34,7 +37,6 @@ class Application(object):
         self.label_src = tk.Label(self.widget_src, text='Src')
         self.label_src.grid(row=0, column=0, padx=(0, 10))
         self.src_text = tk.Text(self.widget_src, height=5)
-        self.src_text.insert('end', 'dedo no cu e gritaria')
         self.src_text.config(state=tk.DISABLED)
         self.src_text.grid(row=0, column=1)
 
@@ -44,7 +46,6 @@ class Application(object):
         self.label_ref = tk.Label(self.widget_ref, text='Ref')
         self.label_ref.grid(row=0, column=0, padx=(0, 10))
         self.ref_text = tk.Text(self.widget_ref, height=5)
-        self.ref_text.insert('end', 'dedo no cu e gritaria')
         self.ref_text.config(state=tk.DISABLED)
         self.ref_text.grid(row=0, column=1)
 
@@ -54,7 +55,6 @@ class Application(object):
         self.label_sys = tk.Label(self.widget_sys, text='Sys')
         self.label_sys.grid(row=0, column=0, padx=(0, 10))
         self.sys_text = tk.Text(self.widget_sys, height=5)
-        self.sys_text.insert('end', 'dedo no cu e gritaria')
         self.sys_text.config(state=tk.DISABLED)
         self.sys_text.grid(row=0, column=1)
 
@@ -63,24 +63,39 @@ class Application(object):
         self.widget_cor.grid(row=3, column=0, pady=10, padx=10, sticky=tk.W)
         self.label_cor = tk.Label(self.widget_cor, text='APE')
         self.label_cor.grid(row=0, column=0, rowspan=3, padx=(0, 10))
-        self.cor_text = tk.Text(self.widget_cor, width=35, height=5)
-        self.cor_text.insert('end', 'dedo no cu e gritaria')
-        self.cor_text.config(state=tk.DISABLED)
-        self.cor_text.grid(row=0, column=1, rowspan=3, padx=(0, 10))
+        self.cor_list = tk.Listbox(self.widget_cor, width=35, height=5)
+        self.cor_list.grid(row=0, column=1, rowspan=3, padx=(0, 10))
         self.correto_button = tk.Button(
             self.widget_cor, text='Correto', width=15)
+        self.correto_button.bind('<Button-1>', self.annotate)
+        self.correto_button.message = 'CORRETO'
         self.correto_button.grid(row=0, column=2)
         self.parcial_button = tk.Button(
             self.widget_cor, text='Parcialmente correto', width=15)
+        self.parcial_button.bind('<Button-1>', self.annotate)
+        self.parcial_button.message = 'PARCIAL'
         self.parcial_button.grid(row=1, column=2)
         self.errado_button = tk.Button(
             self.widget_cor, text='Errado', width=15)
+        self.errado_button.bind('<Button-1>', self.annotate)
+        self.errado_button.message = 'ERRADO'
         self.errado_button.grid(row=2, column=2)
 
+        # Next
+        self.prev_button = tk.Button(
+            self.widget_cor, text='Anterior', width=10)
+        self.prev_button.bind('<Button-1>', self.next_line)
+        self.prev_button.message = 'ANTERIOR'
+        self.prev_button.grid(row=2, column=3)
+        self.next_button = tk.Button(self.widget_cor, text='Próximo', width=10)
+        self.next_button.bind('<Button-1>', self.next_line)
+        self.next_button.message = 'PROXIMO'
+        self.next_button.grid(row=2, column=4)
+
     def load_ape_file(self):
-        fname = fdialog.askopenfilename(title='Selecione um arquivo')
-        assert fname
-        print(fname)
+        self.filename = fdialog.askopenfilename(title='Selecione um arquivo')
+        assert self.filename
+        self.show_annotations()
         return
 
     def get_filename_callback(self, event):
@@ -115,8 +130,8 @@ class Application(object):
         errors = blast_reader.get_filtered_errors(['lex-incTrWord'])
         emb_en, emb_pt = load_embeddings(en_path, pt_path)
 
-        filename = str(uuid.uuid4())
-        save_file = open(filename, 'w')
+        self.filename = str(uuid.uuid4())
+        save_file = open(self.filename, 'w')
         save_file.write('@annotations\n')
 
         for error in errors:
@@ -134,15 +149,18 @@ class Application(object):
             save_file.write('\n')
 
             sentence_to_correct = blast_reader.src_lines[line]
+            candidates = list()
             for i in error[1][0]:
                 if i > 0:
-                    candidates = [w[0] for w in closest_words(
-                        sentence_to_correct[i], emb_en, emb_pt)]
-                    save_file.write('#'.join(candidates))
+                    candidates.extend(['-.-'.join([w[0], 'white']) for w in closest_words(
+                        sentence_to_correct[i], emb_en, emb_pt)])
+                else:
+                    candidates = ['-.-'.join(['***', 'white'])]
+                save_file.write('#@'.join(candidates))
             save_file.write('\n')
 
         save_file.close()
-        msgb.showinfo('Salvo', 'Arquivo salvo em: ' + filename)
+        msgb.showinfo('Salvo', 'Arquivo salvo em: ' + self.filename)
         master.destroy()
 
     def load_blast_file(self, master):
@@ -190,27 +208,76 @@ class Application(object):
 
         return
 
-    def corrige(self):
-        blast_reader = BlastReader(BLAST_FILE_PATH)
-        errors = blast_reader.get_filtered_errors(['lex-incTrWord'])
+    def show_annotations(self):
+        assert self.filename
 
-        emb_en, emb_pt = load_embeddings(MUSE_EN_FILE_PATH, MUSE_PT_FILE_PATH)
+        try:
+            self.ape_reader = ApeReader(self.filename)
+        except RuntimeError:
+            tk.messagebox.showerror(
+                'Formato inválido', 'Formato de arquivo inválido')
+        else:
+            if self.cur_line < 0:
+                self.cur_line = 0
 
-        for error in errors[:2]:
-            line = error[0]
-            print(' '.join(blast_reader.src_lines[line]))
-            print(' '.join(blast_reader.ref_lines[line]))
-            print(' '.join(blast_reader.sys_lines[line]))
+            self.src_text.config(state=tk.NORMAL)
+            self.src_text.delete('1.0', tk.END)
+            self.src_text.insert(
+                'end', self.ape_reader.src_lines[self.cur_line])
+            self.src_text.config(state=tk.DISABLED)
 
-            sentence_to_correct = blast_reader.src_lines[line]
-            sys_sentence = blast_reader.sys_lines[line]
-            for i in error[1][0]:
-                if i > 0:
-                    for w in closest_words(sentence_to_correct[i], emb_en, emb_pt):
-                        corrected_word = w[0]
-                        print('corrected: {} > {}'.format(sentence_to_correct[i],
-                                                          corrected_word))
-                        print('\n')
+            self.ref_text.config(state=tk.NORMAL)
+            self.ref_text.delete('1.0', tk.END)
+            self.ref_text.insert(
+                'end', self.ape_reader.ref_lines[self.cur_line])
+            self.ref_text.config(state=tk.DISABLED)
+
+            self.sys_text.config(state=tk.NORMAL)
+            self.sys_text.delete('1.0', tk.END)
+            self.sys_text.insert(
+                'end', self.ape_reader.sys_lines[self.cur_line])
+            self.sys_text.config(state=tk.DISABLED)
+
+            self.cor_list.delete(0, tk.END)
+            for (i, word) in enumerate(self.ape_reader.corrections[self.cur_line]):
+                self.cor_list.insert(tk.END, word[0])
+                self.cor_list.itemconfig(i, {'bg': word[1]})
+
+    def annotate(self, event):
+        if self.cur_line < 0:
+            tk.messagebox.showerror(
+                'Abrir arquivo', 'É necessário abrir um arquivo')
+        else:
+            if not self.cor_list.curselection():
+                tk.messagebox.showerror(
+                    'Selecione algo', 'Selecione uma palavra para anotar')
+            else:
+                if event.widget.message == 'CORRETO':
+                    self.ape_reader.corrections[self.cur_line][
+                        self.cor_list.curselection()[0]][1] = 'green'
+                    self.ape_reader.save()
+                    self.show_annotations()
+                elif event.widget.message == 'PARCIAL':
+                    self.ape_reader.corrections[self.cur_line][
+                        self.cor_list.curselection()[0]][1] = 'yellow'
+                    self.ape_reader.save()
+                    self.show_annotations()
+                else:
+                    self.ape_reader.corrections[self.cur_line][
+                        self.cor_list.curselection()[0]][1] = 'red'
+                    self.ape_reader.save()
+                    self.show_annotations()
+
+    def next_line(self, event):
+        if self.cur_line < 0:
+            tk.messagebox.showerror(
+                'Abrir arquivo', 'É necessário abrir um arquivo')
+        else:
+            if event.widget.message == 'PROXIMO' and self.cur_line < len(self.ape_reader.src_lines):
+                self.cur_line = self.cur_line + 1
+            elif self.cur_line > 0:
+                self.cur_line = self.cur_line - 1
+            self.show_annotations()
 
 
 root = tk.Tk()

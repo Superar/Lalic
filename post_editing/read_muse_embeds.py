@@ -51,4 +51,5 @@ def closest_words(word, emb_en, emb_pt):
     else:
         close = [(k, cosine(u, emb_pt[k])) for k in list(emb_pt.keys())]
         close = sorted(close, key=lambda x: x[1])
-        return close[:5]
+        close = [w if w else '***' for w in close[:5]]
+        return close
