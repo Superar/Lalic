@@ -37,6 +37,7 @@ class Application(object):
         self.label_src = tk.Label(self.widget_src, text='Src')
         self.label_src.grid(row=0, column=0, padx=(0, 10))
         self.src_text = tk.Text(self.widget_src, height=5)
+        self.src_text.tag_config('DESTAQUE', background='cyan')
         self.src_text.config(state=tk.DISABLED)
         self.src_text.grid(row=0, column=1)
 
@@ -46,6 +47,7 @@ class Application(object):
         self.label_ref = tk.Label(self.widget_ref, text='Ref')
         self.label_ref.grid(row=0, column=0, padx=(0, 10))
         self.ref_text = tk.Text(self.widget_ref, height=5)
+        self.ref_text.tag_config('DESTAQUE', background='cyan')
         self.ref_text.config(state=tk.DISABLED)
         self.ref_text.grid(row=0, column=1)
 
@@ -55,6 +57,7 @@ class Application(object):
         self.label_sys = tk.Label(self.widget_sys, text='Sys')
         self.label_sys.grid(row=0, column=0, padx=(0, 10))
         self.sys_text = tk.Text(self.widget_sys, height=5)
+        self.sys_text.tag_config('DESTAQUE', background='cyan')
         self.sys_text.config(state=tk.DISABLED)
         self.sys_text.grid(row=0, column=1)
 
@@ -65,6 +68,11 @@ class Application(object):
         self.label_cor.grid(row=0, column=0, rowspan=3, padx=(0, 10))
         self.cor_list = tk.Listbox(self.widget_cor, width=35, height=5)
         self.cor_list.grid(row=0, column=1, rowspan=3, padx=(0, 10))
+        self.cor_list_scroll = tk.Scrollbar(
+            self.widget_cor, command=self.cor_list.yview, orient=tk.VERTICAL)
+        self.cor_list_scroll.grid(
+            row=0, column=1, rowspan=3, padx=(0, 10), sticky=tk.N+tk.S+tk.E)
+        self.cor_list.configure(yscrollcommand=self.cor_list_scroll.set)
         self.correto_button = tk.Button(
             self.widget_cor, text='Correto', width=15)
         self.correto_button.bind('<Button-1>', self.annotate)
@@ -155,8 +163,8 @@ class Application(object):
                     candidates.extend(['-.-'.join([w[0], 'white']) for w in closest_words(
                         sentence_to_correct[i], emb_en, emb_pt)])
                 else:
-                    candidates = ['-.-'.join(['***', 'white'])]
-                save_file.write('#@'.join(candidates))
+                    candidates.extend('-.-'.join(['***', 'white']))
+            save_file.write('#@'.join(candidates))
             save_file.write('\n')
 
         save_file.close()
@@ -224,18 +232,33 @@ class Application(object):
             self.src_text.delete('1.0', tk.END)
             self.src_text.insert(
                 'end', self.ape_reader.src_lines[self.cur_line])
+            word_col = [len(' '.join(self.ape_reader.src_lines[self.cur_line][:i]))
+                        for i in self.ape_reader.error_lines[self.cur_line][0]]
+            for c in word_col:
+                self.src_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
+                    c+1), '1.{} wordend'.format(c+1))
             self.src_text.config(state=tk.DISABLED)
 
             self.ref_text.config(state=tk.NORMAL)
             self.ref_text.delete('1.0', tk.END)
             self.ref_text.insert(
                 'end', self.ape_reader.ref_lines[self.cur_line])
+            word_col = [len(' '.join(self.ape_reader.ref_lines[self.cur_line][:i]))
+                        for i in self.ape_reader.error_lines[self.cur_line][2]]
+            for c in word_col:
+                self.ref_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
+                    c+1), '1.{} wordend'.format(c+1))
             self.ref_text.config(state=tk.DISABLED)
 
             self.sys_text.config(state=tk.NORMAL)
             self.sys_text.delete('1.0', tk.END)
             self.sys_text.insert(
                 'end', self.ape_reader.sys_lines[self.cur_line])
+            word_col = [len(' '.join(self.ape_reader.sys_lines[self.cur_line][:i]))
+                        for i in self.ape_reader.error_lines[self.cur_line][1]]
+            for c in word_col:
+                self.sys_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
+                    c+1), '1.{} wordend'.format(c+1))
             self.sys_text.config(state=tk.DISABLED)
 
             self.cor_list.delete(0, tk.END)
