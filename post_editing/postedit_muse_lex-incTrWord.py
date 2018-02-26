@@ -163,7 +163,7 @@ class Application(object):
                     candidates.extend(['-.-'.join([w[0], 'white']) for w in closest_words(
                         sentence_to_correct[i], emb_en, emb_pt)])
                 else:
-                    candidates.extend('-.-'.join(['***', 'white']))
+                    candidates.append('-.-'.join(['***', 'white']))
             save_file.write('#@'.join(candidates))
             save_file.write('\n')
 
