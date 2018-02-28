@@ -138,7 +138,7 @@ class Application(object):
         errors = blast_reader.get_filtered_errors(['lex-incTrWord'])
         emb_en, emb_pt = load_embeddings(en_path, pt_path)
 
-        self.filename = str(uuid.uuid4())
+        self.filename = str(str(uuid.uuid4()) + 'APE_lex-incTrWord')
         save_file = open(self.filename, 'w')
         save_file.write('@annotations\n')
 
