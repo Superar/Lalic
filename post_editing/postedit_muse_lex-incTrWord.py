@@ -71,7 +71,7 @@ class Application(object):
         self.cor_list_scroll = tk.Scrollbar(
             self.widget_cor, command=self.cor_list.yview, orient=tk.VERTICAL)
         self.cor_list_scroll.grid(
-            row=0, column=1, rowspan=3, padx=(0, 10), sticky=tk.N+tk.S+tk.E)
+            row=0, column=1, rowspan=3, padx=(0, 10), sticky=tk.N + tk.S + tk.E)
         self.cor_list.configure(yscrollcommand=self.cor_list_scroll.set)
         self.correto_button = tk.Button(
             self.widget_cor, text='Correto', width=15)
@@ -232,33 +232,48 @@ class Application(object):
             self.src_text.delete('1.0', tk.END)
             self.src_text.insert(
                 'end', self.ape_reader.src_lines[self.cur_line])
-            word_col = [len(' '.join(self.ape_reader.src_lines[self.cur_line][:i]))
-                        for i in self.ape_reader.error_lines[self.cur_line][0]]
+            word_col = list()
+            for i in self.ape_reader.error_lines[self.cur_line][0]:
+                words = ' '.join(self.ape_reader.src_lines[self.cur_line][:i])
+                col = len(words)
+                if '"' in words:
+                    col = col + 2 * words.count('"')
+                word_col.append(col)
             for c in word_col:
                 self.src_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
-                    c+1), '1.{} wordend'.format(c+1))
+                    c + 1), '1.{} wordend'.format(c + 1))
             self.src_text.config(state=tk.DISABLED)
 
             self.ref_text.config(state=tk.NORMAL)
             self.ref_text.delete('1.0', tk.END)
             self.ref_text.insert(
                 'end', self.ape_reader.ref_lines[self.cur_line])
-            word_col = [len(' '.join(self.ape_reader.ref_lines[self.cur_line][:i]))
-                        for i in self.ape_reader.error_lines[self.cur_line][2]]
+            word_col = list()
+            for i in self.ape_reader.error_lines[self.cur_line][2]:
+                words = ' '.join(self.ape_reader.ref_lines[self.cur_line][:i])
+                col = len(words)
+                if '"' in words:
+                    col = col + 2 * words.count('"')
+                word_col.append(col)
             for c in word_col:
                 self.ref_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
-                    c+1), '1.{} wordend'.format(c+1))
+                    c + 1), '1.{} wordend'.format(c + 1))
             self.ref_text.config(state=tk.DISABLED)
 
             self.sys_text.config(state=tk.NORMAL)
             self.sys_text.delete('1.0', tk.END)
             self.sys_text.insert(
                 'end', self.ape_reader.sys_lines[self.cur_line])
-            word_col = [len(' '.join(self.ape_reader.sys_lines[self.cur_line][:i]))
-                        for i in self.ape_reader.error_lines[self.cur_line][1]]
+            word_col = list()
+            for i in self.ape_reader.error_lines[self.cur_line][1]:
+                words = ' '.join(self.ape_reader.sys_lines[self.cur_line][:i])
+                col = len(words)
+                if '"' in words:
+                    col = col + 2 * words.count('"')
+                word_col.append(col)
             for c in word_col:
                 self.sys_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
-                    c+1), '1.{} wordend'.format(c+1))
+                    c + 1), '1.{} wordend'.format(c + 1))
             self.sys_text.config(state=tk.DISABLED)
 
             self.cor_list.delete(0, tk.END)
@@ -297,12 +312,12 @@ class Application(object):
                 'Abrir arquivo', 'É necessário abrir um arquivo')
         else:
             if event.widget.message == 'PROXIMO' and self.cur_line < len(self.ape_reader.src_lines):
-                self.cur_line = self.cur_line + 1
+                self.cur_line=self.cur_line + 1
             elif self.cur_line > 0:
-                self.cur_line = self.cur_line - 1
+                self.cur_line=self.cur_line - 1
             self.show_annotations()
 
 
-root = tk.Tk()
+root=tk.Tk()
 Application(root)
 root.mainloop()
