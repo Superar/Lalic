@@ -157,11 +157,13 @@ class Application(object):
             save_file.write('\n')
 
             sentence_to_correct = blast_reader.src_lines[line]
+            sys_sentence = blast_reader.sys_lines[line]
             candidates = list()
             for i in error[1][0]:
                 if i > 0:
                     candidates.extend(['-.-'.join([w[0], 'white']) for w in closest_words(
-                        sentence_to_correct[i], emb_en, emb_pt)])
+                        sentence_to_correct[i], emb_en, emb_pt,
+                        words_to_ignore=[sys_sentence[j] for j in error[1][1]])])
                 else:
                     candidates.append('-.-'.join(['***', 'white']))
             save_file.write('#@'.join(candidates))

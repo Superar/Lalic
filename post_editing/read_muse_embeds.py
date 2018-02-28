@@ -43,7 +43,7 @@ def load_embeddings(path_en, path_pt):
     
     return emb_en, emb_pt
 
-def closest_words(word, emb_en, emb_pt):
+def closest_words(word, emb_en, emb_pt, words_to_ignore=None):
     try:
         u = emb_en[word]
     except KeyError:
@@ -51,5 +51,6 @@ def closest_words(word, emb_en, emb_pt):
     else:
         close = [(k, cosine(u, emb_pt[k])) for k in list(emb_pt.keys())]
         close = sorted(close, key=lambda x: x[1])
+        close = [w for w in close if w[0] not in words_to_ignore]
         close = [w if w else '***' for w in close[:5]]
         return close
