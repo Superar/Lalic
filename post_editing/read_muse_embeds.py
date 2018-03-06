@@ -49,8 +49,9 @@ def closest_words(word, emb_en, emb_pt, words_to_ignore=None):
     except KeyError:
         return ['***']
     else:
-        close = [(k, cosine(u, emb_pt[k])) for k in list(emb_pt.keys())]
+        close = list()
+
+        close = [(k, cosine(u, emb_pt[k])) for k in list(emb_pt.keys()) if k not in words_to_ignore]
         close = sorted(close, key=lambda x: x[1])
-        close = [w for w in close if w[0] not in words_to_ignore]
         close = [w if w else '***' for w in close[:5]]
         return close

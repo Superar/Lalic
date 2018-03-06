@@ -2,6 +2,7 @@
 import sys
 import os
 import tkinter as tk
+import tkinter.ttk as ttk
 import tkinter.messagebox as msgb
 import tkinter.filedialog as fdialog
 sys.path.insert(0, '/home/marciolima/Documentos/Lalic/word_embeddings')
@@ -146,7 +147,16 @@ class Application(object):
         save_file.write(str(self.cur_line))
         save_file.write('\n')
 
+        # Progresso
+        error_num = 0
+        progress_var = tk.DoubleVar()
+        progress_bar = ttk.Progressbar(
+            master, variable=progress_var, maximum=len(errors))
+        self.concluido_button.destroy()
+        progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
+
         for error in errors:
+            progress_var.set(error_num)
             line = error[0]
             save_file.write(' '.join(blast_reader.src_lines[line]))
             save_file.write('\n')
@@ -172,6 +182,8 @@ class Application(object):
                     candidates.append('-.-'.join(['***', 'white']))
             save_file.write('#@'.join(candidates))
             save_file.write('\n')
+            master.update_idletasks()
+            error_num = error_num + 1
 
         save_file.close()
         msgb.showinfo('Salvo', 'Arquivo salvo em: ' + self.filename)
@@ -217,16 +229,16 @@ class Application(object):
 
         self.error_type = tk.StringVar(blast_widget)
         self.error_type.set(self.errors[0])
-        
+
         error_label = tk.Label(blast_widget, text='Tipo de Erro')
         error_label.grid(row=3, column=0, pady=10)
         error_menu = tk.OptionMenu(blast_widget, self.error_type, *self.errors)
         error_menu.grid(row=3, column=1, columnspan=2, pady=10, sticky=tk.W)
 
         # Concluido
-        concluido_button = tk.Button(
+        self.concluido_button = tk.Button(
             blast_widget, text='Concluído', command=lambda: self.load_blast(blast_window))
-        concluido_button.grid(row=4, column=0, columnspan=3, pady=10)
+        self.concluido_button.grid(row=4, column=0, columnspan=3, pady=10)
 
         return
 
