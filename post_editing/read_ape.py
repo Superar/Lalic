@@ -7,10 +7,13 @@ class ApeReader(object):
         self.sys_lines = list()
         self.corrections = list()
         self.filename = filename
+        self.cur_line = -1
 
         with open(filename, 'r') as _file:
             if not _file.readline().strip() == '@annotations':
                 raise RuntimeError('Formato inválido')
+
+            self.cur_line = int(_file.readline().strip())
 
             while True:
                 src = _file.readline().split()
@@ -33,6 +36,8 @@ class ApeReader(object):
     def save(self):
         with open(self.filename, 'w') as _file:
             _file.write('@annotations\n')
+            _file.write(str(self.cur_line))
+            _file.write('\n')
 
             for line in range(len(self.src_lines)):
                 _file.write(' '.join(self.src_lines[line]))
@@ -47,5 +52,6 @@ class ApeReader(object):
                 error_info.append(self.error_lines[line][-1])
                 _file.write('#'.join(error_info))
 
-                _file.write('#@'.join(['-.-'.join(w) for w in self.corrections[line]]))
+                _file.write('#@'.join(['-.-'.join(w)
+                                       for w in self.corrections[line]]))
                 _file.write('\n')

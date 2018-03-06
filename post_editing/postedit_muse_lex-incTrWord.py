@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-import uuid
+import os
 import tkinter as tk
 import tkinter.messagebox as msgb
 import tkinter.filedialog as fdialog
@@ -138,9 +138,12 @@ class Application(object):
         errors = blast_reader.get_filtered_errors(['lex-incTrWord'])
         emb_en, emb_pt = load_embeddings(en_path, pt_path)
 
-        self.filename = str(str(uuid.uuid4()) + 'APE_lex-incTrWord')
+        self.filename = os.path.splitext(
+            os.path.split(blast_path)[1])[0] + '_APE_lex-incTrWord'
         save_file = open(self.filename, 'w')
         save_file.write('@annotations\n')
+        save_file.write(str(self.cur_line))
+        save_file.write('\n')
 
         for error in errors:
             line = error[0]
@@ -227,6 +230,7 @@ class Application(object):
             tk.messagebox.showerror(
                 'Formato inválido', 'Formato de arquivo inválido')
         else:
+            self.cur_line = self.ape_reader.cur_line
             if self.cur_line < 0:
                 self.cur_line = 0
 
@@ -292,6 +296,7 @@ class Application(object):
                 tk.messagebox.showerror(
                     'Selecione algo', 'Selecione uma palavra para anotar')
             else:
+                self.ape_reader.cur_line = self.cur_line
                 if event.widget.message == 'CORRETO':
                     self.ape_reader.corrections[self.cur_line][
                         self.cor_list.curselection()[0]][1] = 'green'
@@ -314,12 +319,14 @@ class Application(object):
                 'Abrir arquivo', 'É necessário abrir um arquivo')
         else:
             if event.widget.message == 'PROXIMO' and self.cur_line < len(self.ape_reader.src_lines):
-                self.cur_line=self.cur_line + 1
+                self.cur_line = self.cur_line + 1
             elif self.cur_line > 0:
-                self.cur_line=self.cur_line - 1
+                self.cur_line = self.cur_line - 1
+            self.ape_reader.cur_line = self.cur_line
+            self.ape_reader.save()
             self.show_annotations()
 
 
-root=tk.Tk()
+root = tk.Tk()
 Application(root)
 root.mainloop()
