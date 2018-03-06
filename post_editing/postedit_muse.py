@@ -19,6 +19,7 @@ class Application(object):
         master.title('Pós-edição automática')
 
         self.cur_line = -1
+        self.errors = ['lex-incTrWord', 'lex-notTrWord']
 
         # Menu
         self.menubar = tk.Menu(master)
@@ -135,11 +136,11 @@ class Application(object):
         assert pt_path
 
         blast_reader = BlastReader(blast_path)
-        errors = blast_reader.get_filtered_errors(['lex-incTrWord'])
+        errors = blast_reader.get_filtered_errors([self.error_type.get()])
         emb_en, emb_pt = load_embeddings(en_path, pt_path)
 
         self.filename = os.path.splitext(
-            os.path.split(blast_path)[1])[0] + '_APE_lex-incTrWord'
+            os.path.split(blast_path)[1])[0] + '_APE_' + self.error_type.get()
         save_file = open(self.filename, 'w')
         save_file.write('@annotations\n')
         save_file.write(str(self.cur_line))
@@ -214,10 +215,18 @@ class Application(object):
         pt_path_button.message = 'PT'
         pt_path_button.grid(row=2, column=2)
 
+        self.error_type = tk.StringVar(blast_widget)
+        self.error_type.set(self.errors[0])
+        
+        error_label = tk.Label(blast_widget, text='Tipo de Erro')
+        error_label.grid(row=3, column=0, pady=10)
+        error_menu = tk.OptionMenu(blast_widget, self.error_type, *self.errors)
+        error_menu.grid(row=3, column=1, columnspan=2, pady=10, sticky=tk.W)
+
         # Concluido
         concluido_button = tk.Button(
             blast_widget, text='Concluído', command=lambda: self.load_blast(blast_window))
-        concluido_button.grid(row=3, column=0, columnspan=3, pady=10)
+        concluido_button.grid(row=4, column=0, columnspan=3, pady=10)
 
         return
 
