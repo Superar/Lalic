@@ -67,13 +67,13 @@ class Application(object):
         self.widget_cor = tk.Frame(master)
         self.widget_cor.grid(row=3, column=0, pady=10, padx=10, sticky=tk.W)
         self.label_cor = tk.Label(self.widget_cor, text='APE')
-        self.label_cor.grid(row=0, column=0, rowspan=3, padx=(0, 10))
+        self.label_cor.grid(row=0, column=0, rowspan=4, padx=(0, 10))
         self.cor_list = tk.Listbox(self.widget_cor, width=35, height=5)
-        self.cor_list.grid(row=0, column=1, rowspan=3, padx=(0, 10))
+        self.cor_list.grid(row=0, column=1, rowspan=4, padx=(0, 10))
         self.cor_list_scroll = tk.Scrollbar(
             self.widget_cor, command=self.cor_list.yview, orient=tk.VERTICAL)
         self.cor_list_scroll.grid(
-            row=0, column=1, rowspan=3, padx=(0, 10), sticky=tk.N + tk.S + tk.E)
+            row=0, column=1, rowspan=4, padx=(0, 10), sticky=tk.N + tk.S + tk.E)
         self.cor_list.configure(yscrollcommand=self.cor_list_scroll.set)
         self.correto_button = tk.Button(
             self.widget_cor, text='Correto', width=15)
@@ -90,17 +90,22 @@ class Application(object):
         self.errado_button.bind('<Button-1>', self.annotate)
         self.errado_button.message = 'ERRADO'
         self.errado_button.grid(row=2, column=2)
+        self.ignorar_button = tk.Button(
+            self.widget_cor, text='Ignorar', width=15)
+        self.ignorar_button.bind('<Button-1>', self.annotate)
+        self.ignorar_button.message = 'IGNORAR'
+        self.ignorar_button.grid(row=3, column=2)
 
         # Next
         self.prev_button = tk.Button(
             self.widget_cor, text='Anterior', width=10)
         self.prev_button.bind('<Button-1>', self.next_line)
         self.prev_button.message = 'ANTERIOR'
-        self.prev_button.grid(row=2, column=3)
+        self.prev_button.grid(row=3, column=3)
         self.next_button = tk.Button(self.widget_cor, text='Próximo', width=10)
         self.next_button.bind('<Button-1>', self.next_line)
         self.next_button.message = 'PROXIMO'
-        self.next_button.grid(row=2, column=4)
+        self.next_button.grid(row=3, column=4)
 
     def load_ape_file(self):
         self.filename = fdialog.askopenfilename(title='Selecione um arquivo')
@@ -322,17 +327,19 @@ class Application(object):
                     self.ape_reader.corrections[self.cur_line][
                         self.cor_list.curselection()[0]][1] = 'green'
                     self.ape_reader.save()
-                    self.show_annotations()
                 elif event.widget.message == 'PARCIAL':
                     self.ape_reader.corrections[self.cur_line][
                         self.cor_list.curselection()[0]][1] = 'yellow'
                     self.ape_reader.save()
-                    self.show_annotations()
-                else:
+                elif event.widget.message == 'ERRADO':
                     self.ape_reader.corrections[self.cur_line][
                         self.cor_list.curselection()[0]][1] = 'red'
                     self.ape_reader.save()
-                    self.show_annotations()
+                else:
+                    self.ape_reader.corrections[self.cur_line][
+                        self.cor_list.curselection()[0]][1] = 'white'
+                    self.ape_reader.save()
+                self.show_annotations()
 
     def next_line(self, event):
         if self.cur_line < 0:
