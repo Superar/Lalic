@@ -107,6 +107,11 @@ class Application(object):
         self.next_button.message = 'PROXIMO'
         self.next_button.grid(row=3, column=4)
 
+        # Numero da sentenca
+        self.sent_num = tk.StringVar()
+        self.numero_label = tk.Label(master, textvariable=self.sent_num)
+        self.numero_label.grid(row=0, column=1, padx=(0, 10), pady=10, sticky=tk.N + tk.E)
+
     def load_ape_file(self):
         self.filename = fdialog.askopenfilename(title='Selecione um arquivo')
         assert self.filename
@@ -312,6 +317,8 @@ class Application(object):
             for (i, word) in enumerate(self.ape_reader.corrections[self.cur_line]):
                 self.cor_list.insert(tk.END, word[0])
                 self.cor_list.itemconfig(i, {'bg': word[1]})
+            
+            self.sent_num.set('{}/{}'.format(self.ape_reader.cur_line + 1, len(self.ape_reader.src_lines)))
 
     def annotate(self, event):
         if self.cur_line < 0:
@@ -346,9 +353,9 @@ class Application(object):
             tk.messagebox.showerror(
                 'Abrir arquivo', 'É necessário abrir um arquivo')
         else:
-            if event.widget.message == 'PROXIMO' and self.cur_line < len(self.ape_reader.src_lines):
+            if event.widget.message == 'PROXIMO' and self.cur_line < len(self.ape_reader.src_lines) - 1:
                 self.cur_line = self.cur_line + 1
-            elif self.cur_line > 0:
+            elif event.widget.message == 'ANTERIOR' and self.cur_line > 0:
                 self.cur_line = self.cur_line - 1
             self.ape_reader.cur_line = self.cur_line
             self.ape_reader.save()
