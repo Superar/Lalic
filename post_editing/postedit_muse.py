@@ -271,11 +271,12 @@ class Application(object):
                 'end', self.ape_reader.src_lines[self.cur_line])
             word_col = list()
             for i in self.ape_reader.error_lines[self.cur_line][0]:
-                words = ' '.join(self.ape_reader.src_lines[self.cur_line][:i])
-                col = len(words)
-                if '"' in words:
-                    col = col + 2 * words.count('"')
-                word_col.append(col)
+                if i > 0:
+                    words = ' '.join(self.ape_reader.src_lines[self.cur_line][:i])
+                    col = len(words)
+                    if '"' in words:
+                        col = col + 2 * words.count('"')
+                    word_col.append(col)
             for c in word_col:
                 self.src_text.tag_add('DESTAQUE', '1.{} wordstart'.format(
                     c + 1), '1.{} wordend'.format(c + 1))
@@ -317,7 +318,7 @@ class Application(object):
             for (i, word) in enumerate(self.ape_reader.corrections[self.cur_line]):
                 self.cor_list.insert(tk.END, word[0])
                 self.cor_list.itemconfig(i, {'bg': word[1]})
-            
+
             self.sent_num.set('{}/{}'.format(self.ape_reader.cur_line + 1, len(self.ape_reader.src_lines)))
 
     def annotate(self, event):
