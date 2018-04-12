@@ -133,7 +133,20 @@ preprocess.py
 setup.py
 train.py
 translate.py
-mteval-v13a.pl
+mteval-v14.pl
+formata-mteval-v14.pl
+*.bleu
+
+# Post Editing
+post_editing/resultados/
+post_editing/*incTrWord*
+post_editing/vectors*.txt
+post_editing/*truecased*
+
+# Word Embeddings
+word_embeddings/models/
+word_embeddings/bnc_allsentences.txt
+word_embeddings/model_*
 
 # Model files
 *_model*
