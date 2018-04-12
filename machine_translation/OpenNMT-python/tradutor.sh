@@ -1,15 +1,4 @@
-#Install python torch
-# pip3 install http://download.pytorch.org/whl/cu80/torch-0.1.12.post2-cp35-cp35m-linux_x86_64.whl
-# pip3 install torchvision
-
-# Download do tokenizador moses
-# wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/tokenizer/tokenizer.perl
-# wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/share/nonbreaking_prefixes/nonbreaking_prefix.de
-# wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/share/nonbreaking_prefixes/nonbreaking_prefix.en
-# wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/share/nonbreaking_prefixes/nonbreaking_prefix.pt
-# sed -i "s/$RealBin\/..\/share\/nonbreaking_prefixes//" tokenizer.perl
-# wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/generic/multi-bleu.perl
-
+OPEN_NMT_PATH=$HOME/bin/OpenNMT-py
 DATA_PATH=../Corpus_FAPESP_v2
 TRAIN_PATH=$DATA_PATH/corpus_treinamento/pt-en
 TEST_PATH=$DATA_PATH/corpus_teste/pt-en
@@ -18,26 +7,59 @@ TGT_LAN=pt
 
 mkdir -p $DATA_PATH/nmt_model $TRAIN_PATH/preprocessed
 
+# Download do tokenizador moses
+echo "Instalando moses"
+if [ ! -f tokenizer.perl ]; then
+    wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/tokenizer/tokenizer.perl;
+fi
+
+for l in $SRC_LAN $TGT_LAN
+do
+    if [ ! -f nonbreaking_prefix.$l ]; then
+        wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/share/nonbreaking_prefixes/nonbreaking_prefix.$l;
+    fi
+done
+sed -i "s/$RealBin\/..\/share\/nonbreaking_prefixes//" tokenizer.perl
+
+if [ ! -f detokenizer.perl ]; then
+    wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/tokenizer/detokenizer.perl;
+fi
+
+if [ ! -f mteval-v14.pl ]; then
+    wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/generic/mteval-v14.pl;
+fi
+
+if [ ! -f multi-bleu.perl ]; then
+    wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/generic/multi-bleu.perl;
+fi
+
 # Substitui `` e '' por ""
-sed -i "s/\`\`/\"/g" $TRAIN_PATH/*.en
-sed -i "s/''/\"/g" $TRAIN_PATH/*.en
+echo "Substituindo aspas"
+# sed -i "s/\`\`/\"/g" $TRAIN_PATH/*.en
+# sed -i "s/''/\"/g" $TRAIN_PATH/*.en
 
 # Tokeniza textos
+echo "Tokenizando textos"
 for l in $SRC_LAN $TGT_LAN
 do
     for f in $TRAIN_PATH/*.$l
     do
-        perl tokenizer.perl -a -no-escape -l $l -q  < $f > $f.atok
+        if [ ! -f $f.atok ]; then
+            perl tokenizer.perl -a -no-escape -l $l -q  < $f > $f.atok;
+        fi
     done
 
     for f in $TEST_PATH/*.$l
     do
-      perl tokenizer.perl -a -no-escape -l $l -q < $f > $f.atok
+        if [ ! -f $f.atok ]; then
+            perl tokenizer.perl -a -no-escape -l $l -q < $f > $f.atok;
+        fi
     done
 done
 
 # Pre-processamento
-python3 preprocess.py \
+echo "Pre-processando"
+python3 $OPEN_NMT_PATH/preprocess.py \
     -train_src $TRAIN_PATH/fapesp-v2.pt-en.train.en.atok \
     -train_tgt $TRAIN_PATH/fapesp-v2.pt-en.train.pt.atok \
     -valid_src $TRAIN_PATH/fapesp-v2.pt-en.dev.en.atok \
@@ -46,34 +68,67 @@ python3 preprocess.py \
     -lower
 
 # Treinamento
-python3 train.py \
-    -data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low.train.pt \
-    -save_model $DATA_PATH/nmt_model/fapesp-v2_model \
-    -gpus 0
+echo "Treinando"
+python3 $OPEN_NMT_PATH/train.py \
+    -data $TRAIN_PATH/preprocessed/fapesp-v2.atok.low \
+    -save_model $DATA_PATH/nmt_model/nmt_model \
+    -gpuid 0 \
+    -word_vec_size 300 \
+    -pre_word_vecs_enc vectors-en-torch.enc.pt \
+    -pre_word_vecs_dec vectors-en-torch.dec.pt
 
 # Teste
-python3 translate.py \
+echo "Testando"
+python3 $OPEN_NMT_PATH/translate.py \
     -gpu 0 \
-    -model $DATA_PATH/nmt_model/1/fapesp-v2_model_*_e13.pt \
+    -model $DATA_PATH/nmt_model/nmt_model_*_e13.pt \
     -src $TEST_PATH/fapesp-v2.pt-en.test-a.en.atok \
     -tgt $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok \
     -replace_unk \
-    -verbose \
     -output $TEST_PATH/fapesp-v2.pt-en.test-a.output
 
-python3 translate.py \
+python3 $OPEN_NMT_PATH/translate.py \
     -gpu 0 \
-    -model $DATA_PATH/nmt_model/fapesp-v2_model_*_e13.pt \
+    -model $DATA_PATH/nmt_model/nmt_model_*_e13.pt \
     -src $TEST_PATH/fapesp-v2.pt-en.test-b.en.atok \
     -tgt $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok \
     -replace_unk \
-    -verbose \
     -output $TEST_PATH/fapesp-v2.pt-en.test-b.output
 
-# Transforma texto para teste em lowercase
-perl -pe '$_=lc' $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok > $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok.lower
-perl -pe '$_=lc' $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok > $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok.lower
+# Destokenizar
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-a.detok ]; then
+    perl detokenizer.perl -l pt < $TEST_PATH/fapesp-v2.pt-en.test-a.output > $TEST_PATH/fapesp-v2.pt-en.test-a.detok;
+fi
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-b.detok ]; then
+    perl detokenizer.perl -l pt < $TEST_PATH/fapesp-v2.pt-en.test-b.output > $TEST_PATH/fapesp-v2.pt-en.test-b.detok;
+fi
 
 # Calculo BLEU
-perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-a.pt.atok.lower < $TEST_PATH/2/fapesp-v2.pt-en.test-a.output > $TEST_PATH/2/teste-a.bleu
-perl multi-bleu.perl $TEST_PATH/fapesp-v2.pt-en.test-b.pt.atok.lower < $TEST_PATH/2/fapesp-v2.pt-en.test-b.output > $TEST_PATH/2/teste-b.bleu
+echo "Calculando BLEU"
+# test-a
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-a.en.sgm ]; then
+perl formata-mteval-v14.pl $TEST_PATH/fapesp-v2.pt-en.test-a.en src en pt $TEST_PATH/fapesp-v2.pt-en.test-a.en.sgm;
+fi
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-a.pt.sgm ]; then
+perl formata-mteval-v14.pl $TEST_PATH/fapesp-v2.pt-en.test-a.pt ref en pt $TEST_PATH/fapesp-v2.pt-en.test-a.pt.sgm;
+fi
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-a.detok.sgm ]; then
+perl formata-mteval-v14.pl $TEST_PATH/fapesp-v2.pt-en.test-a.detok test en pt $TEST_PATH/fapesp-v2.pt-en.test-a.detok.sgm;
+fi
+perl mteval-v14.pl -r $TEST_PATH/fapesp-v2.pt-en.test-a.pt.sgm \
+                   -s $TEST_PATH/fapesp-v2.pt-en.test-a.en.sgm \
+                   -t $TEST_PATH/fapesp-v2.pt-en.test-a.detok.sgm > $TEST_PATH/test-a.bleu
+
+# test-b
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-b.en.sgm ]; then
+perl formata-mteval-v14.pl $TEST_PATH/fapesp-v2.pt-en.test-b.en src en pt $TEST_PATH/fapesp-v2.pt-en.test-b.en.sgm;
+fi
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-b.pt.sgm ]; then
+perl formata-mteval-v14.pl $TEST_PATH/fapesp-v2.pt-en.test-b.pt ref en pt $TEST_PATH/fapesp-v2.pt-en.test-b.pt.sgm;
+fi
+if [ ! -f $TEST_PATH/fapesp-v2.pt-en.test-b.detok.sgm ]; then
+perl formata-mteval-v14.pl $TEST_PATH/fapesp-v2.pt-en.test-b.detok test en pt $TEST_PATH/fapesp-v2.pt-en.test-b.detok.sgm;
+fi
+perl mteval-v14.pl -r $TEST_PATH/fapesp-v2.pt-en.test-b.pt.sgm \
+                   -s $TEST_PATH/fapesp-v2.pt-en.test-b.en.sgm \
+                   -t $TEST_PATH/fapesp-v2.pt-en.test-b.detok.sgm > $TEST_PATH/test-b.bleu
