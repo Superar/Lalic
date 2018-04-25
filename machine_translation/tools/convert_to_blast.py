@@ -1,11 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import codecs
+import argparse
 
-src_file_path = '../Corpus_FAPESP_v2/corpus_teste/pt-en/fapesp-v2.pt-en.test-a.en.atok'
-ref_file_path = '../Corpus_FAPESP_v2/corpus_teste/pt-en/fapesp-v2.pt-en.test-a.pt.atok'
-out_file_path = '../Corpus_FAPESP_v2/corpus_teste/pt-en/2/fapesp-v2.pt-en.test-a.truecased'
-blast_file_path = '../Corpus_FAPESP_v2/corpus_teste/pt-en/2/FAPESP_NMT_test-a.txt'
+parser = argparse.ArgumentParser()
+parser.add_argument('-src', '--source_path',
+                    help='Caminho para texto no idioma fonte', type=str, default=None, required=True)
+parser.add_argument('-ref', '--reference_path',
+                    help='Caminho para texto de referência no idioma alvo', type=str, default=None, required=True)
+parser.add_argument('-out', '--output_path',
+                    help='Caminho para saída do tradutor automático no idioma alvo', type=str, default=None, required=True)
+parser.add_argument('-blast', '--blast_path',
+                    help='Caminho onde deve ser salvo o arquivo BLAST', type=str, default=None, required=True)
+FLAGS = parser.parse_args()
+
+src_file_path = FLAGS.source_path
+ref_file_path = FLAGS.reference_path
+out_file_path = FLAGS.output_path
+blast_file_path = FLAGS.blast_path
 
 
 src_file = codecs.open(src_file_path, encoding='utf-8')
