@@ -60,11 +60,14 @@ class PostEditWindow(object):
 
         # Concluido
         self.done_button = tk.Button(
-            self.blast_widget, text='Done', command=lambda: self.load_blast())
+            self.blast_widget, text='Done', command=self.load_blast)
         self.done_button.grid(row=4, column=0, columnspan=2, pady=10)
         self.cancel_button = tk.Button(
             self.blast_widget, text='Cancel', command=self.close_window_callback)
         self.cancel_button.grid(row=4, column=1, columnspan=3, pady=10)
+        self.cancel_ape_button = tk.Button(
+            self.blast_widget, text='Cancel', command=self.cancel_ape_callback)
+        self.stop = False
 
     def get_filename_callback(self, event):
         filename = fdialog.askopenfile(title='Select a file')
@@ -91,6 +94,9 @@ class PostEditWindow(object):
     
     def close_window_callback(self):
         self.blast_window.destroy()
+    
+    def cancel_ape_callback(self):
+        self.stop = True
 
     def load_blast(self):
         blast_path = self.blast_path_text.get('1.0', tk.END).strip()
@@ -127,10 +133,16 @@ class PostEditWindow(object):
                 progress_bar = ttk.Progressbar(
                     self.blast_window, variable=progress_var, maximum=len(errors))
                 self.done_button.destroy()
-                self.cancel_button.grid(row=5, column=0, columnspan=3, pady=10)
+                self.cancel_button.destroy()
+                self.cancel_ape_button.grid(row=5, column=0, columnspan=3, pady=10)
                 progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
 
                 for error in errors:
+                    if self.stop:
+                        break
+                    self.blast_window.update_idletasks()
+                    self.blast_window.update()
+
                     progress_var.set(error_num)
                     line = error[0]
                     save_file.write(' '.join(blast_reader.src_lines[line]))
@@ -157,9 +169,13 @@ class PostEditWindow(object):
                             candidates.append('-.-'.join(['***', 'white']))
                     save_file.write('#@'.join(candidates))
                     save_file.write('\n')
-                    self.blast_window.update_idletasks()
                     error_num = error_num + 1
 
-                save_file.close()
-                msgb.showinfo('Saved', 'File saved as: ' + self.filename)
-                self.close_window_callback()
+                if not self.stop:
+                    save_file.close()
+                    msgb.showinfo('Saved', 'File saved as: ' + self.filename)
+                    self.close_window_callback()
+                else:
+                    self.stop = False
+                    self.blast_window.destroy()
+                    self.__init__(self.app)
