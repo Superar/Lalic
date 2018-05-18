@@ -3,8 +3,10 @@ import tkinter.filedialog as fdialog
 import tkinter.ttk as ttk
 import tkinter.messagebox as msgb
 import os
+import queue
 from readers.read_blast import BlastReader
 from read_muse_embeds import load_embeddings, closest_words
+from post_edit import PostEditor
 
 
 class PostEditWindow(object):
@@ -60,11 +62,15 @@ class PostEditWindow(object):
 
         # Concluido
         self.done_button = tk.Button(
-            self.blast_widget, text='Done', command=lambda: self.load_blast())
+            self.blast_widget, text='Done', command=self.load_blast)
         self.done_button.grid(row=4, column=0, columnspan=2, pady=10)
         self.cancel_button = tk.Button(
             self.blast_widget, text='Cancel', command=self.close_window_callback)
         self.cancel_button.grid(row=4, column=1, columnspan=3, pady=10)
+        self.cancel_ape_button = tk.Button(
+            self.blast_widget, text='Cancel', command=self.cancel_ape_callback)
+        self.stop = False
+        self.queue = queue.Queue()
 
     def get_filename_callback(self, event):
         filename = fdialog.askopenfile(title='Select a file')
@@ -88,21 +94,25 @@ class PostEditWindow(object):
                 self.pt_path_text.delete('1.0', tk.END)
                 self.pt_path_text.insert('end', filename.name)
                 self.pt_path_text.config(state=tk.DISABLED)
-    
+
     def close_window_callback(self):
         self.blast_window.destroy()
+
+    def cancel_ape_callback(self):
+        self.stop = True
 
     def load_blast(self):
         blast_path = self.blast_path_text.get('1.0', tk.END).strip()
         en_path = self.en_path_text.get('1.0', tk.END).strip()
         pt_path = self.pt_path_text.get('1.0', tk.END).strip()
+
         try:
             assert blast_path
             assert en_path
             assert pt_path
         except AssertionError:
             tk.messagebox.showerror(
-                'Select files', 'It is necessary to selct all files.')
+                'Select files', 'It is necessary to select all files.')
         else:
             try:
                 blast_reader = BlastReader(blast_path)
@@ -114,52 +124,42 @@ class PostEditWindow(object):
                     [self.error_type.get()])
                 emb_en, emb_pt = load_embeddings(en_path, pt_path)
 
-                self.filename = os.path.splitext(
-                    os.path.split(blast_path)[1])[0] + '_APE_' + self.error_type.get()
-                save_file = open(self.filename, 'w')
-                save_file.write('@annotations\n')
-                save_file.write(str(self.app.cur_line))
-                save_file.write('\n')
+                self.filename = os.path.splitext(os.path.split(blast_path)[1])[
+                    0] + '_APE_' + self.error_type.get()
 
-                # Progresso
-                error_num = 0
                 progress_var = tk.DoubleVar()
-                progress_bar = ttk.Progressbar(
+                self.progress_bar = ttk.Progressbar(
                     self.blast_window, variable=progress_var, maximum=len(errors))
-                self.done_button.destroy()
-                self.cancel_button.grid(row=5, column=0, columnspan=3, pady=10)
-                progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
+                self.done_button.grid_forget()
+                self.cancel_button.grid_forget()
+                self.cancel_ape_button.grid(
+                    row=5, column=0, columnspan=3, pady=10)
+                self.progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
 
-                for error in errors:
-                    progress_var.set(error_num)
-                    line = error[0]
-                    save_file.write(' '.join(blast_reader.src_lines[line]))
-                    save_file.write('\n')
-                    save_file.write(' '.join(blast_reader.ref_lines[line]))
-                    save_file.write('\n')
-                    save_file.write(' '.join(blast_reader.sys_lines[line]))
-                    save_file.write('\n')
+                post_editor = PostEditor(
+                    self, blast_reader, emb_en, emb_pt, progress_var, self.queue)
+                self.app.master.after(100, self.ape_queue_callback)
 
-                    error_info = [','.join(map(str, e)) for e in error[1][:-1]]
-                    error_info.append(error[1][-1])
-                    save_file.write('#'.join(error_info))
-                    save_file.write('\n')
+                self.blast_path_button.config(state=tk.DISABLED)
+                self.en_path_button.config(state=tk.DISABLED)
+                self.pt_path_button.config(state=tk.DISABLED)
+                self.error_menu.config(state=tk.DISABLED)
 
-                    sentence_to_correct = blast_reader.src_lines[line]
-                    sys_sentence = blast_reader.sys_lines[line]
-                    candidates = list()
-                    for i in error[1][0]:
-                        if i > 0:
-                            candidates.extend(['-.-'.join([w[0], 'white']) for w in closest_words(
-                                sentence_to_correct[i], emb_en, emb_pt,
-                                words_to_ignore=[sys_sentence[j] for j in error[1][1]])])
-                        else:
-                            candidates.append('-.-'.join(['***', 'white']))
-                    save_file.write('#@'.join(candidates))
-                    save_file.write('\n')
-                    self.blast_window.update_idletasks()
-                    error_num = error_num + 1
-
-                save_file.close()
+    def ape_queue_callback(self):
+        try:
+            msg = self.queue.get(block=False)
+            if msg == 0:
                 msgb.showinfo('Saved', 'File saved as: ' + self.filename)
                 self.close_window_callback()
+            else:
+                self.stop = False
+                self.progress_bar.destroy()
+                self.cancel_ape_button.grid_forget()
+                self.done_button.grid(row=4, column=0, columnspan=2, pady=10)
+                self.cancel_button.grid(row=4, column=1, columnspan=3, pady=10)
+                self.blast_path_button.config(state=tk.NORMAL)
+                self.en_path_button.config(state=tk.NORMAL)
+                self.pt_path_button.config(state=tk.NORMAL)
+                self.error_menu.config(state=tk.NORMAL)
+        except queue.Empty:
+            self.app.master.after(100, self.ape_queue_callback)
