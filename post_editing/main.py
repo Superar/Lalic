@@ -6,9 +6,8 @@ import tkinter.ttk as ttk
 import tkinter.messagebox as msgb
 import tkinter.filedialog as fdialog
 sys.path.insert(0, '/home/marciolima/Documentos/Lalic/word_embeddings')
-from read_blast import BlastReader
+from ape_window import PostEditWindow
 from read_ape import ApeReader
-from read_muse_embeds import load_embeddings, closest_words
 
 BLAST_FILE_PATH = '/home/marciolima/Dropbox/Marcio/Tarefas/1.Anotacao_erros_corpus_NMT/Blast/Entrada_Blast/test-a/FAPESP_NMT_test-a_truecased.txt'
 MUSE_EN_FILE_PATH = '/home/marciolima/MUSE/dumped/gq0uc5nw4m/vectors-en.txt'
@@ -17,24 +16,25 @@ MUSE_PT_FILE_PATH = '/home/marciolima/MUSE/dumped/gq0uc5nw4m/vectors-pt.txt'
 
 class Application(object):
     def __init__(self, master=None):
-        master.title('Pós-edição automática')
+        self.master = master
+        self.master.title('Pós-edição automática')
 
         self.cur_line = -1
         self.errors = ['lex-incTrWord', 'lex-notTrWord']
 
         # Menu
-        self.menubar = tk.Menu(master)
+        self.menubar = tk.Menu(self.master)
         self.apemenu = tk.Menu(self.menubar, tearoff=0)
         self.apemenu.add_command(label='Abrir', command=self.load_ape_file)
         self.menubar.add_cascade(label='APE', menu=self.apemenu)
         self.blastmenu = tk.Menu(self.menubar, tearoff=0)
         self.blastmenu.add_command(
-            label='Abrir', command=lambda: self.load_blast_file(master))
+            label='Abrir', command=lambda: PostEditWindow(self))
         self.menubar.add_cascade(label='BLAST', menu=self.blastmenu)
-        master.config(menu=self.menubar)
+        self.master.config(menu=self.menubar)
 
         # Src
-        self.widget_src = tk.Frame(master)
+        self.widget_src = tk.Frame(self.master)
         self.widget_src.grid(row=0, column=0, pady=10, padx=10)
         self.label_src = tk.Label(self.widget_src, text='Src')
         self.label_src.grid(row=0, column=0, padx=(0, 10))
@@ -44,7 +44,7 @@ class Application(object):
         self.src_text.grid(row=0, column=1)
 
         # Ref
-        self.widget_ref = tk.Frame(master)
+        self.widget_ref = tk.Frame(self.master)
         self.widget_ref.grid(row=1, column=0, pady=10, padx=10)
         self.label_ref = tk.Label(self.widget_ref, text='Ref')
         self.label_ref.grid(row=0, column=0, padx=(0, 10))
@@ -54,7 +54,7 @@ class Application(object):
         self.ref_text.grid(row=0, column=1)
 
         # Sys
-        self.widget_sys = tk.Frame(master)
+        self.widget_sys = tk.Frame(self.master)
         self.widget_sys.grid(row=2, column=0, pady=10, padx=10)
         self.label_sys = tk.Label(self.widget_sys, text='Sys')
         self.label_sys.grid(row=0, column=0, padx=(0, 10))
@@ -64,7 +64,7 @@ class Application(object):
         self.sys_text.grid(row=0, column=1)
 
         # APE
-        self.widget_cor = tk.Frame(master)
+        self.widget_cor = tk.Frame(self.master)
         self.widget_cor.grid(row=3, column=0, pady=10, padx=10, sticky=tk.W)
         self.label_cor = tk.Label(self.widget_cor, text='APE')
         self.label_cor.grid(row=0, column=0, rowspan=4, padx=(0, 10))
@@ -109,147 +109,13 @@ class Application(object):
 
         # Numero da sentenca
         self.sent_num = tk.StringVar()
-        self.numero_label = tk.Label(master, textvariable=self.sent_num)
+        self.numero_label = tk.Label(self.master, textvariable=self.sent_num)
         self.numero_label.grid(row=0, column=1, padx=(0, 10), pady=10, sticky=tk.N + tk.E)
 
     def load_ape_file(self):
         self.filename = fdialog.askopenfilename(title='Selecione um arquivo')
         assert self.filename
         self.show_annotations()
-        return
-
-    def get_filename_callback(self, event):
-        filename = fdialog.askopenfile(title='Selecione um arquivo')
-        assert filename
-
-        if event.widget.message == 'BLAST':
-            self.blast_path_text.config(state=tk.NORMAL)
-            self.blast_path_text.delete('1.0', tk.END)
-            self.blast_path_text.insert('end', filename.name)
-            self.blast_path_text.config(state=tk.DISABLED)
-        elif event.widget.message == 'EN':
-            self.en_path_text.config(state=tk.NORMAL)
-            self.en_path_text.delete('1.0', tk.END)
-            self.en_path_text.insert('end', filename.name)
-            self.en_path_text.config(state=tk.DISABLED)
-        else:
-            self.pt_path_text.config(state=tk.NORMAL)
-            self.pt_path_text.delete('1.0', tk.END)
-            self.pt_path_text.insert('end', filename.name)
-            self.pt_path_text.config(state=tk.DISABLED)
-
-    def load_blast(self, master):
-        blast_path = self.blast_path_text.get('1.0', tk.END).strip()
-        en_path = self.en_path_text.get('1.0', tk.END).strip()
-        pt_path = self.pt_path_text.get('1.0', tk.END).strip()
-        assert blast_path
-        assert en_path
-        assert pt_path
-
-        blast_reader = BlastReader(blast_path)
-        errors = blast_reader.get_filtered_errors([self.error_type.get()])
-        emb_en, emb_pt = load_embeddings(en_path, pt_path)
-
-        self.filename = os.path.splitext(
-            os.path.split(blast_path)[1])[0] + '_APE_' + self.error_type.get()
-        save_file = open(self.filename, 'w')
-        save_file.write('@annotations\n')
-        save_file.write(str(self.cur_line))
-        save_file.write('\n')
-
-        # Progresso
-        error_num = 0
-        progress_var = tk.DoubleVar()
-        progress_bar = ttk.Progressbar(
-            master, variable=progress_var, maximum=len(errors))
-        self.concluido_button.destroy()
-        progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
-
-        for error in errors:
-            progress_var.set(error_num)
-            line = error[0]
-            save_file.write(' '.join(blast_reader.src_lines[line]))
-            save_file.write('\n')
-            save_file.write(' '.join(blast_reader.ref_lines[line]))
-            save_file.write('\n')
-            save_file.write(' '.join(blast_reader.sys_lines[line]))
-            save_file.write('\n')
-
-            error_info = [','.join(map(str, e)) for e in error[1][:-1]]
-            error_info.append(error[1][-1])
-            save_file.write('#'.join(error_info))
-            save_file.write('\n')
-
-            sentence_to_correct = blast_reader.src_lines[line]
-            sys_sentence = blast_reader.sys_lines[line]
-            candidates = list()
-            for i in error[1][0]:
-                if i > 0:
-                    candidates.extend(['-.-'.join([w[0], 'white']) for w in closest_words(
-                        sentence_to_correct[i], emb_en, emb_pt,
-                        words_to_ignore=[sys_sentence[j] for j in error[1][1]])])
-                else:
-                    candidates.append('-.-'.join(['***', 'white']))
-            save_file.write('#@'.join(candidates))
-            save_file.write('\n')
-            master.update_idletasks()
-            error_num = error_num + 1
-
-        save_file.close()
-        msgb.showinfo('Salvo', 'Arquivo salvo em: ' + self.filename)
-        master.destroy()
-
-    def load_blast_file(self, master):
-        blast_window = tk.Toplevel(master)
-        blast_widget = tk.Frame(blast_window)
-        blast_widget.grid(row=0, column=0, pady=10, padx=10)
-
-        # BLAST
-        blast_path_label = tk.Label(blast_widget, text='Arquivo BLAST')
-        blast_path_label.grid(row=0, column=0, sticky=tk.W)
-        self.blast_path_text = tk.Text(blast_widget, height=1)
-        self.blast_path_text.config(state=tk.DISABLED)
-        self.blast_path_text.grid(row=0, column=1, padx=10)
-        blast_path_button = tk.Button(blast_widget, text='Selecionar')
-        blast_path_button.bind('<Button-1>', self.get_filename_callback)
-        blast_path_button.message = 'BLAST'
-        blast_path_button.grid(row=0, column=2)
-
-        # EN
-        en_path_label = tk.Label(blast_widget, text='Embeddings EN')
-        en_path_label.grid(row=1, column=0, sticky=tk.W)
-        self.en_path_text = tk.Text(blast_widget, height=1)
-        self.en_path_text.config(state=tk.DISABLED)
-        self.en_path_text.grid(row=1, column=1, padx=10)
-        en_path_button = tk.Button(blast_widget, text='Selecionar')
-        en_path_button.bind('<Button-1>', self.get_filename_callback)
-        en_path_button.message = 'EN'
-        en_path_button.grid(row=1, column=2)
-
-        # PT
-        pt_path_label = tk.Label(blast_widget, text='Embeddings PT')
-        pt_path_label.grid(row=2, column=0, sticky=tk.W)
-        self.pt_path_text = tk.Text(blast_widget, height=1)
-        self.pt_path_text.config(state=tk.DISABLED)
-        self.pt_path_text.grid(row=2, column=1, padx=10)
-        pt_path_button = tk.Button(blast_widget, text='Selecionar')
-        pt_path_button.bind('<Button-1>', self.get_filename_callback)
-        pt_path_button.message = 'PT'
-        pt_path_button.grid(row=2, column=2)
-
-        self.error_type = tk.StringVar(blast_widget)
-        self.error_type.set(self.errors[0])
-
-        error_label = tk.Label(blast_widget, text='Tipo de Erro')
-        error_label.grid(row=3, column=0, pady=10)
-        error_menu = tk.OptionMenu(blast_widget, self.error_type, *self.errors)
-        error_menu.grid(row=3, column=1, columnspan=2, pady=10, sticky=tk.W)
-
-        # Concluido
-        self.concluido_button = tk.Button(
-            blast_widget, text='Concluído', command=lambda: self.load_blast(blast_window))
-        self.concluido_button.grid(row=4, column=0, columnspan=3, pady=10)
-
         return
 
     def show_annotations(self):
