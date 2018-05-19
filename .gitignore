@@ -137,6 +137,9 @@ mteval-v14.pl
 formata-mteval-v14.pl
 *.bleu
 
+# BOO
+BOO/
+
 # Post Editing
 post_editing/resultados/
 post_editing/*incTrWord*
