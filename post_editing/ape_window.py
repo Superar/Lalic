@@ -97,6 +97,9 @@ class PostEditWindow(object):
 
     def close_window_callback(self):
         self.blast_window.destroy()
+    
+    def cancel_ape_callback(self):
+        self.stop = True
 
     def cancel_ape_callback(self):
         self.stop = True
