@@ -5,7 +5,7 @@ import tkinter.messagebox as msgb
 import os
 import queue
 from readers.read_blast import BlastReader
-from read_muse_embeds import load_embeddings
+from readers.read_muse_embeds import load_embeddings, MuseReader
 from post_edit import PostEditor
 
 
@@ -60,9 +60,9 @@ class PostEditWindow(object):
         self.error_menu.grid(row=3, column=1, columnspan=2,
                              pady=10, sticky=tk.W)
 
-        # Concluido
+        # Done
         self.done_button = tk.Button(
-            self.blast_widget, text='Done', command=self.load_blast)
+            self.blast_widget, text='Done', command=self.load_muse)
         self.done_button.grid(row=4, column=0, columnspan=2, pady=10)
         self.cancel_button = tk.Button(
             self.blast_widget, text='Cancel', command=self.close_window_callback)
@@ -70,7 +70,15 @@ class PostEditWindow(object):
         self.cancel_ape_button = tk.Button(
             self.blast_widget, text='Cancel', command=self.cancel_ape_callback)
         self.stop = False
-        self.queue = queue.Queue()
+        
+        # Queues for Threads
+        self.ape_queue = queue.Queue()
+        self.muse_en_queue = queue.Queue()
+        self.muse_pt_queue = queue.Queue()
+
+        # Muse embeddings
+        self.emb_en = dict()
+        self.emb_pt = dict()
 
     def get_filename_callback(self, event):
         filename = fdialog.askopenfile(title='Select a file')
@@ -97,22 +105,48 @@ class PostEditWindow(object):
 
     def close_window_callback(self):
         self.blast_window.destroy()
-    
-    def cancel_ape_callback(self):
-        self.stop = True
 
     def cancel_ape_callback(self):
+        self.cancel_ape_button.config(state=tk.DISABLED)
         self.stop = True
 
-    def load_blast(self):
-        blast_path = self.blast_path_text.get('1.0', tk.END).strip()
+    def load_muse(self):
         en_path = self.en_path_text.get('1.0', tk.END).strip()
         pt_path = self.pt_path_text.get('1.0', tk.END).strip()
 
         try:
-            assert blast_path
             assert en_path
             assert pt_path
+        except AssertionError:
+            tk.messagebox.showerror(
+                'Select files', 'It is necessary to select all files.')
+        else:
+            try:
+                MuseReader(self, en_path, self.muse_en_queue)
+            except FileNotFoundError:
+                tk.messagebox.showerror(
+                    'File not found', 'MUSE file for English Embeddings not found.')
+            else:
+                try:
+                    MuseReader(self, pt_path, self.muse_pt_queue)
+                except FileNotFoundError:
+                    tk.messagebox.showerror(
+                        'File not found', 'MUSE file for Portuguese Embeddings not fund.')
+                else:
+                    self.app.master.after(100, self.load_muse_callback)
+
+                    self.done_button.grid_forget()
+                    self.cancel_button.grid_forget()
+                    self.blast_path_button.config(state=tk.DISABLED)
+                    self.en_path_button.config(state=tk.DISABLED)
+                    self.pt_path_button.config(state=tk.DISABLED)
+                    self.error_menu.config(state=tk.DISABLED)
+
+    def load_blast(self):
+        blast_path = self.blast_path_text.get('1.0', tk.END).strip()
+
+        try:
+            assert blast_path
         except AssertionError:
             tk.messagebox.showerror(
                 'Select files', 'It is necessary to select all files.')
@@ -125,7 +159,6 @@ class PostEditWindow(object):
             else:
                 errors = blast_reader.get_filtered_errors(
                     [self.error_type.get()])
-                emb_en, emb_pt = load_embeddings(en_path, pt_path)
 
                 self.filename = os.path.splitext(os.path.split(blast_path)[1])[
                     0] + '_APE_' + self.error_type.get()
@@ -133,24 +166,29 @@ class PostEditWindow(object):
                 progress_var = tk.DoubleVar()
                 self.progress_bar = ttk.Progressbar(
                     self.blast_window, variable=progress_var, maximum=len(errors))
-                self.done_button.grid_forget()
-                self.cancel_button.grid_forget()
+                self.cancel_ape_button.config(state=tk.NORMAL)
                 self.cancel_ape_button.grid(
                     row=5, column=0, columnspan=3, pady=10)
                 self.progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
 
-                post_editor = PostEditor(
-                    self, blast_reader, emb_en, emb_pt, progress_var, self.queue)
+                PostEditor(self, blast_reader, progress_var)
                 self.app.master.after(100, self.ape_queue_callback)
 
-                self.blast_path_button.config(state=tk.DISABLED)
-                self.en_path_button.config(state=tk.DISABLED)
-                self.pt_path_button.config(state=tk.DISABLED)
-                self.error_menu.config(state=tk.DISABLED)
+    def load_muse_callback(self):
+        try:
+            if not self.emb_en:
+                self.emb_en = self.muse_en_queue.get_nowait()
+            if not self.emb_pt:
+                self.emb_pt = self.muse_pt_queue.get_nowait()
+        except queue.Empty:
+            self.app.master.after(100, self.load_muse_callback)
+        else:
+            if not self.stop:
+                self.load_blast()
 
     def ape_queue_callback(self):
         try:
-            msg = self.queue.get(block=False)
+            msg = self.ape_queue.get_nowait()
             if msg == 0:
                 msgb.showinfo('Saved', 'File saved as: ' + self.filename)
                 self.close_window_callback()
@@ -158,8 +196,10 @@ class PostEditWindow(object):
                 self.stop = False
                 self.progress_bar.destroy()
                 self.cancel_ape_button.grid_forget()
-                self.done_button.grid(row=4, column=0, columnspan=2, pady=10)
-                self.cancel_button.grid(row=4, column=1, columnspan=3, pady=10)
+                self.done_button.grid(
+                    row=4, column=0, columnspan=2, pady=10)
+                self.cancel_button.grid(
+                    row=4, column=1, columnspan=3, pady=10)
                 self.blast_path_button.config(state=tk.NORMAL)
                 self.en_path_button.config(state=tk.NORMAL)
                 self.pt_path_button.config(state=tk.NORMAL)

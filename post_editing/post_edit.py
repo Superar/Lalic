@@ -1,19 +1,19 @@
 import threading
 import queue
 from multiprocessing import cpu_count
-from read_muse_embeds import closest_words
+from readers.read_muse_embeds import closest_words
 
 
 class PostEditor(threading.Thread):
 
-    def __init__(self, window, blast_reader, emb_en, emb_pt, progress_var, msg_queue):
+    def __init__(self, window, blast_reader, progress_var):
         threading.Thread.__init__(self)
         self.window = window
         self.blast_reader = blast_reader
-        self.emb_en = emb_en
-        self.emb_pt = emb_pt
+        self.emb_en = window.emb_en
+        self.emb_pt = window.emb_pt
         self.progress_var = progress_var
-        self.msg_queue = msg_queue
+        self.msg_queue = window.ape_queue
         self.queue_threads_in = queue.Queue()
         self.queue_threads_out = queue.Queue()
 
