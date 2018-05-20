@@ -5,7 +5,7 @@ import tkinter.messagebox as msgb
 import os
 import queue
 from readers.read_blast import BlastReader
-from read_muse_embeds import load_embeddings, closest_words
+from read_muse_embeds import load_embeddings
 from post_edit import PostEditor
 
 
