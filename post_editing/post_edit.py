@@ -13,6 +13,9 @@ class PostEditor(threading.Thread):
         self.emb_en = window.emb_en
         self.emb_pt = window.emb_pt
         self.progress_var = progress_var
+
+        self.chunk_threads = list()
+
         self.msg_queue = window.ape_queue
         self.queue_threads_in = queue.Queue()
         self.queue_threads_out = queue.Queue()
@@ -36,16 +39,17 @@ class PostEditor(threading.Thread):
                   for t in range(num_threads)]
 
         for chunk in chunks:
-            PostEditChunk(self.blast_reader, self.emb_en, self.emb_pt,
-                          chunk, self.queue_threads_in, self.queue_threads_out)
+            self.chunk_threads.append(PostEditChunk(self.blast_reader, self.emb_en, self.emb_pt,
+                                                    chunk, self.queue_threads_in, self.queue_threads_out))
 
         content_list = ['' for _ in range(len(errors))]
         finished_threads = 0
         while True:
             if self.window.stop:
-                self.msg_queue.put(-1)
                 for _ in range(num_threads):
                     self.queue_threads_in.put(-1)
+                for thread in self.chunk_threads:
+                    thread.join()
                 break
             msg = self.queue_threads_out.get()
             if msg == 0:
@@ -64,6 +68,8 @@ class PostEditor(threading.Thread):
             save_file.write(save_file_content)
             save_file.close()
             self.msg_queue.put(0)
+        else:
+            self.msg_queue.put(-1)
 
 
 class PostEditChunk(threading.Thread):

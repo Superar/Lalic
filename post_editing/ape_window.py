@@ -70,15 +70,20 @@ class PostEditWindow(object):
         self.cancel_ape_button = tk.Button(
             self.blast_widget, text='Cancel', command=self.cancel_ape_callback)
         self.stop = False
-        
-        # Queues for Threads
+        self.should_close = False
+
+        # Threads
         self.ape_queue = queue.Queue()
         self.muse_en_queue = queue.Queue()
         self.muse_pt_queue = queue.Queue()
+        self.running_threads = list()
 
         # Muse embeddings
         self.emb_en = dict()
         self.emb_pt = dict()
+
+        self.blast_window.protocol(
+            'WM_DELETE_WINDOW', self.close_window_callback)
 
     def get_filename_callback(self, event):
         filename = fdialog.askopenfile(title='Select a file')
@@ -104,7 +109,13 @@ class PostEditWindow(object):
                 self.pt_path_text.config(state=tk.DISABLED)
 
     def close_window_callback(self):
-        self.blast_window.destroy()
+        self.cancel_ape_callback()
+        self.should_close = True
+        self.running_threads = [thread for thread in self.running_threads if thread.is_alive()]
+        if not self.running_threads:
+            self.blast_window.destroy()
+        else:
+            self.blast_window.after(100, self.close_window_callback)
 
     def cancel_ape_callback(self):
         self.cancel_ape_button.config(state=tk.DISABLED)
@@ -122,18 +133,20 @@ class PostEditWindow(object):
                 'Select files', 'It is necessary to select all files.')
         else:
             try:
-                MuseReader(self, en_path, self.muse_en_queue)
+                self.running_threads.append(MuseReader(
+                    self, en_path, self.muse_en_queue))
             except FileNotFoundError:
                 tk.messagebox.showerror(
                     'File not found', 'MUSE file for English Embeddings not found.')
             else:
                 try:
-                    MuseReader(self, pt_path, self.muse_pt_queue)
+                    self.running_threads.append(MuseReader(
+                        self, pt_path, self.muse_pt_queue))
                 except FileNotFoundError:
                     tk.messagebox.showerror(
                         'File not found', 'MUSE file for Portuguese Embeddings not fund.')
                 else:
-                    self.app.master.after(100, self.load_muse_callback)
+                    self.blast_window.after(100, self.load_muse_callback)
 
                     self.done_button.grid_forget()
                     self.cancel_button.grid_forget()
@@ -171,8 +184,9 @@ class PostEditWindow(object):
                     row=5, column=0, columnspan=3, pady=10)
                 self.progress_bar.grid(row=4, column=0, columnspan=3, pady=10)
 
-                PostEditor(self, blast_reader, progress_var)
-                self.app.master.after(100, self.ape_queue_callback)
+                self.running_threads.append(
+                    PostEditor(self, blast_reader, progress_var))
+                self.blast_window.after(100, self.ape_queue_callback)
 
     def load_muse_callback(self):
         try:
@@ -181,7 +195,7 @@ class PostEditWindow(object):
             if not self.emb_pt:
                 self.emb_pt = self.muse_pt_queue.get_nowait()
         except queue.Empty:
-            self.app.master.after(100, self.load_muse_callback)
+            self.blast_window.after(100, self.load_muse_callback)
         else:
             if not self.stop:
                 self.load_blast()
@@ -193,16 +207,17 @@ class PostEditWindow(object):
                 msgb.showinfo('Saved', 'File saved as: ' + self.filename)
                 self.close_window_callback()
             else:
-                self.stop = False
-                self.progress_bar.destroy()
-                self.cancel_ape_button.grid_forget()
-                self.done_button.grid(
-                    row=4, column=0, columnspan=2, pady=10)
-                self.cancel_button.grid(
-                    row=4, column=1, columnspan=3, pady=10)
-                self.blast_path_button.config(state=tk.NORMAL)
-                self.en_path_button.config(state=tk.NORMAL)
-                self.pt_path_button.config(state=tk.NORMAL)
-                self.error_menu.config(state=tk.NORMAL)
+                if not self.should_close:
+                    self.stop = False
+                    self.progress_bar.destroy()
+                    self.cancel_ape_button.grid_forget()
+                    self.done_button.grid(
+                        row=4, column=0, columnspan=2, pady=10)
+                    self.cancel_button.grid(
+                        row=4, column=1, columnspan=3, pady=10)
+                    self.blast_path_button.config(state=tk.NORMAL)
+                    self.en_path_button.config(state=tk.NORMAL)
+                    self.pt_path_button.config(state=tk.NORMAL)
+                    self.error_menu.config(state=tk.NORMAL)
         except queue.Empty:
-            self.app.master.after(100, self.ape_queue_callback)
+            self.blast_window.after(100, self.ape_queue_callback)
