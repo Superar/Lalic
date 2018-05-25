@@ -1,4 +1,4 @@
-from read_ape import ApeReader
+from readers.read_ape import ApeReader
 
 FILE_PATH = 'FAPESP_NMT_test-a_truecased_300_APE_lex-incTrWord'
 

@@ -7,7 +7,7 @@ import tkinter.messagebox as msgb
 import tkinter.filedialog as fdialog
 sys.path.insert(0, '/home/marciolima/Documentos/Lalic/word_embeddings')
 from ape_window import PostEditWindow
-from read_ape import ApeReader
+from readers.read_ape import ApeReader
 
 BLAST_FILE_PATH = '/home/marciolima/Dropbox/Marcio/Tarefas/1.Anotacao_erros_corpus_NMT/Blast/Entrada_Blast/test-a/FAPESP_NMT_test-a_truecased.txt'
 MUSE_EN_FILE_PATH = '/home/marciolima/MUSE/dumped/gq0uc5nw4m/vectors-en.txt'
