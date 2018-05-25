@@ -4,10 +4,12 @@ import tkinter.ttk as ttk
 import tkinter.messagebox as msgb
 import os
 import queue
+import gettext
 from readers.read_blast import BlastReader
 from readers.read_muse_embeds import load_embeddings, MuseReader
 from post_edit import PostEditor
 
+_ = gettext.gettext
 
 class PostEditWindow(object):
 
@@ -18,34 +20,34 @@ class PostEditWindow(object):
         self.blast_widget.grid(row=0, column=0, pady=10, padx=10)
 
         # BLAST
-        self.blast_path_label = tk.Label(self.blast_widget, text='BLAST file')
+        self.blast_path_label = tk.Label(self.blast_widget, text=_('BLAST file'))
         self.blast_path_label.grid(row=0, column=0, sticky=tk.W)
         self.blast_path_text = tk.Text(self.blast_widget, height=1)
         self.blast_path_text.config(state=tk.DISABLED)
         self.blast_path_text.grid(row=0, column=1, padx=10)
-        self.blast_path_button = tk.Button(self.blast_widget, text='Select')
+        self.blast_path_button = tk.Button(self.blast_widget, text=_('Select'))
         self.blast_path_button.bind('<Button-1>', self.get_filename_callback)
         self.blast_path_button.message = 'BLAST'
         self.blast_path_button.grid(row=0, column=2)
 
         # EN
-        self.en_path_label = tk.Label(self.blast_widget, text='Embeddings EN')
+        self.en_path_label = tk.Label(self.blast_widget, text=_('Embeddings EN'))
         self.en_path_label.grid(row=1, column=0, sticky=tk.W)
         self.en_path_text = tk.Text(self.blast_widget, height=1)
         self.en_path_text.config(state=tk.DISABLED)
         self.en_path_text.grid(row=1, column=1, padx=10)
-        self.en_path_button = tk.Button(self.blast_widget, text='Select')
+        self.en_path_button = tk.Button(self.blast_widget, text=_('Select'))
         self.en_path_button.bind('<Button-1>', self.get_filename_callback)
         self.en_path_button.message = 'EN'
         self.en_path_button.grid(row=1, column=2)
 
         # PT
-        self.pt_path_label = tk.Label(self.blast_widget, text='Embeddings PT')
+        self.pt_path_label = tk.Label(self.blast_widget, text=_('Embeddings PT'))
         self.pt_path_label.grid(row=2, column=0, sticky=tk.W)
         self.pt_path_text = tk.Text(self.blast_widget, height=1)
         self.pt_path_text.config(state=tk.DISABLED)
         self.pt_path_text.grid(row=2, column=1, padx=10)
-        self.pt_path_button = tk.Button(self.blast_widget, text='Select')
+        self.pt_path_button = tk.Button(self.blast_widget, text=_('Select'))
         self.pt_path_button.bind('<Button-1>', self.get_filename_callback)
         self.pt_path_button.message = 'PT'
         self.pt_path_button.grid(row=2, column=2)
@@ -53,7 +55,7 @@ class PostEditWindow(object):
         self.error_type = tk.StringVar(self.blast_widget)
         self.error_type.set(application.errors[0])
 
-        self.error_label = tk.Label(self.blast_widget, text='Error type')
+        self.error_label = tk.Label(self.blast_widget, text=_('Error type'))
         self.error_label.grid(row=3, column=0, pady=10)
         self.error_menu = tk.OptionMenu(
             self.blast_widget, self.error_type, *application.errors)
@@ -62,13 +64,13 @@ class PostEditWindow(object):
 
         # Done
         self.done_button = tk.Button(
-            self.blast_widget, text='Done', command=self.load_muse)
+            self.blast_widget, text=_('Done'), command=self.load_muse)
         self.done_button.grid(row=4, column=0, columnspan=2, pady=10)
         self.cancel_button = tk.Button(
-            self.blast_widget, text='Cancel', command=self.close_window_callback)
+            self.blast_widget, text=_('Cancel'), command=self.close_window_callback)
         self.cancel_button.grid(row=4, column=1, columnspan=3, pady=10)
         self.cancel_ape_button = tk.Button(
-            self.blast_widget, text='Cancel', command=self.cancel_ape_callback)
+            self.blast_widget, text=_('Cancel'), command=self.cancel_ape_callback)
         self.stop = False
         self.should_close = False
 
@@ -86,7 +88,7 @@ class PostEditWindow(object):
             'WM_DELETE_WINDOW', self.close_window_callback)
 
     def get_filename_callback(self, event):
-        filename = fdialog.askopenfile(title='Select a file')
+        filename = fdialog.askopenfile(title=_('Select a file'))
         try:
             assert filename
         except AssertionError:
@@ -130,21 +132,21 @@ class PostEditWindow(object):
             assert pt_path
         except AssertionError:
             tk.messagebox.showerror(
-                'Select files', 'It is necessary to select all files.')
+                _('Select files'), _('It is necessary to select all files.'))
         else:
             try:
                 self.running_threads.append(MuseReader(
                     self, en_path, self.muse_en_queue))
             except FileNotFoundError:
                 tk.messagebox.showerror(
-                    'File not found', 'MUSE file for English Embeddings not found.')
+                    _('File not found'), _('MUSE file for English Embeddings not found.'))
             else:
                 try:
                     self.running_threads.append(MuseReader(
                         self, pt_path, self.muse_pt_queue))
                 except FileNotFoundError:
                     tk.messagebox.showerror(
-                        'File not found', 'MUSE file for Portuguese Embeddings not fund.')
+                        _('File not found'), _('MUSE file for Portuguese Embeddings not fund.'))
                 else:
                     self.blast_window.after(100, self.load_muse_callback)
 
@@ -162,13 +164,13 @@ class PostEditWindow(object):
             assert blast_path
         except AssertionError:
             tk.messagebox.showerror(
-                'Select files', 'It is necessary to select all files.')
+                _('Select files'), _('It is necessary to select all files.'))
         else:
             try:
                 blast_reader = BlastReader(blast_path)
             except FileNotFoundError:
                 tk.messagebox.showerror(
-                    'File not found', 'BLAST file not found.')
+                    _('File not found'), _('BLAST file not found.'))
             else:
                 errors = blast_reader.get_filtered_errors(
                     [self.error_type.get()])
@@ -204,7 +206,7 @@ class PostEditWindow(object):
         try:
             msg = self.ape_queue.get_nowait()
             if msg == 0:
-                msgb.showinfo('Saved', 'File saved as: ' + self.filename)
+                msgb.showinfo(_('Saved'), _('File saved as: ') + self.filename)
                 self.close_window_callback()
             else:
                 if not self.should_close:
