@@ -1,5 +1,5 @@
 import argparse
-from read_ape import ApeReader
+from readers.read_ape import ApeReader
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('-f', '--file', help='Caminho para o arquivo anotado',

@@ -1,21 +1,32 @@
+import threading
 import numpy as np
 from scipy.spatial.distance import cosine
 
-def read_embeds(filepath):
-    global size, dim
-    embeds = list()
 
-    with open(filepath, 'r') as _file:
-        size, dim = map(int, _file.readline().split())
-        while True:
-            line = _file.readline().split()
-            if not line:
-                break
+class MuseReader(threading.Thread):
 
-            embed = np.array(line[-dim:], dtype=np.float)
-            embeds.append((" ".join(line[:-dim]), embed))
+    def __init__(self, window, path, msg_queue):
+        threading.Thread.__init__(self)
+        self.window = window
+        self.path = path
+        self.embeds = dict()
+        self.msg_queue = msg_queue
+        self.start()
 
-    return embeds
+    def run(self):
+        with open(self.path, 'r') as _file:
+            num_emb, dim = map(int, _file.readline().split())
+
+            for _ in range(num_emb):
+                if self.window.stop:
+                    break
+                line = _file.readline().split()
+                key = ' '.join(line[:-dim])
+                value = list(map(float, line[-dim:]))
+                self.embeds[key] = np.array(value)
+
+        self.msg_queue.put(self.embeds)
+
 
 def load_embeddings(path_en, path_pt):
     file_en = open(path_en, 'r')
@@ -40,8 +51,9 @@ def load_embeddings(path_en, path_pt):
 
     file_en.close()
     file_pt.close()
-    
+
     return emb_en, emb_pt
+
 
 def closest_words(word, emb_en, emb_pt, words_to_ignore=None):
     try:
@@ -51,7 +63,8 @@ def closest_words(word, emb_en, emb_pt, words_to_ignore=None):
     else:
         close = list()
 
-        close = [(k, cosine(u, emb_pt[k])) for k in list(emb_pt.keys()) if k not in words_to_ignore]
+        close = [(k, cosine(u, emb_pt[k]))
+                 for k in list(emb_pt.keys()) if k not in words_to_ignore]
         close = sorted(close, key=lambda x: x[1])
         close = [w if w else '***' for w in close[:5]]
         return close

@@ -1,23 +1,25 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+#  -*- coding: utf-8 -*-
 import sys
-import os
+import gettext
+import locale
 import tkinter as tk
-import tkinter.ttk as ttk
-import tkinter.messagebox as msgb
 import tkinter.filedialog as fdialog
 sys.path.insert(0, '/home/marciolima/Documentos/Lalic/word_embeddings')
 from ape_window import PostEditWindow
-from read_ape import ApeReader
+from readers.read_ape import ApeReader
 
-BLAST_FILE_PATH = '/home/marciolima/Dropbox/Marcio/Tarefas/1.Anotacao_erros_corpus_NMT/Blast/Entrada_Blast/test-a/FAPESP_NMT_test-a_truecased.txt'
-MUSE_EN_FILE_PATH = '/home/marciolima/MUSE/dumped/gq0uc5nw4m/vectors-en.txt'
-MUSE_PT_FILE_PATH = '/home/marciolima/MUSE/dumped/gq0uc5nw4m/vectors-pt.txt'
+
+try:
+    gettext.translation('ape', localedir='locale', languages=[locale.getlocale()[0]]).install()
+except IOError:
+    gettext.translation('ape', localedir='locale', languages=['en_US']).install()
 
 
 class Application(object):
     def __init__(self, master=None):
         self.master = master
-        self.master.title('Pós-edição automática')
+        self.master.title(_('Automatic Post-Editing'))
 
         self.cur_line = -1
         self.errors = ['lex-incTrWord', 'lex-notTrWord']
@@ -25,11 +27,11 @@ class Application(object):
         # Menu
         self.menubar = tk.Menu(self.master)
         self.apemenu = tk.Menu(self.menubar, tearoff=0)
-        self.apemenu.add_command(label='Abrir', command=self.load_ape_file)
-        self.menubar.add_cascade(label='APE', menu=self.apemenu)
+        self.apemenu.add_command(label=_('Open'), command=self.load_ape_file)
+        self.menubar.add_cascade(label=_('APE'), menu=self.apemenu)
         self.blastmenu = tk.Menu(self.menubar, tearoff=0)
         self.blastmenu.add_command(
-            label='Abrir', command=lambda: PostEditWindow(self))
+            label=_('Open'), command=lambda: PostEditWindow(self))
         self.menubar.add_cascade(label='BLAST', menu=self.blastmenu)
         self.master.config(menu=self.menubar)
 
@@ -76,33 +78,33 @@ class Application(object):
             row=0, column=1, rowspan=4, padx=(0, 10), sticky=tk.N + tk.S + tk.E)
         self.cor_list.configure(yscrollcommand=self.cor_list_scroll.set)
         self.correto_button = tk.Button(
-            self.widget_cor, text='Correto', width=15)
+            self.widget_cor, text=_('Correct'), width=15)
         self.correto_button.bind('<Button-1>', self.annotate)
         self.correto_button.message = 'CORRETO'
         self.correto_button.grid(row=0, column=2)
         self.parcial_button = tk.Button(
-            self.widget_cor, text='Parcialmente correto', width=15)
+            self.widget_cor, text=_('Partially correct'), width=15)
         self.parcial_button.bind('<Button-1>', self.annotate)
         self.parcial_button.message = 'PARCIAL'
         self.parcial_button.grid(row=1, column=2)
         self.errado_button = tk.Button(
-            self.widget_cor, text='Errado', width=15)
+            self.widget_cor, text=_('Wrong'), width=15)
         self.errado_button.bind('<Button-1>', self.annotate)
         self.errado_button.message = 'ERRADO'
         self.errado_button.grid(row=2, column=2)
         self.ignorar_button = tk.Button(
-            self.widget_cor, text='Ignorar', width=15)
+            self.widget_cor, text=_('Ignore'), width=15)
         self.ignorar_button.bind('<Button-1>', self.annotate)
         self.ignorar_button.message = 'IGNORAR'
         self.ignorar_button.grid(row=3, column=2)
 
         # Next
         self.prev_button = tk.Button(
-            self.widget_cor, text='Anterior', width=10)
+            self.widget_cor, text=_('Previous'), width=10)
         self.prev_button.bind('<Button-1>', self.next_line)
         self.prev_button.message = 'ANTERIOR'
         self.prev_button.grid(row=3, column=3)
-        self.next_button = tk.Button(self.widget_cor, text='Próximo', width=10)
+        self.next_button = tk.Button(self.widget_cor, text=_('Next'), width=10)
         self.next_button.bind('<Button-1>', self.next_line)
         self.next_button.message = 'PROXIMO'
         self.next_button.grid(row=3, column=4)
@@ -110,10 +112,11 @@ class Application(object):
         # Numero da sentenca
         self.sent_num = tk.StringVar()
         self.numero_label = tk.Label(self.master, textvariable=self.sent_num)
-        self.numero_label.grid(row=0, column=1, padx=(0, 10), pady=10, sticky=tk.N + tk.E)
+        self.numero_label.grid(row=0, column=1, padx=(
+            0, 10), pady=10, sticky=tk.N + tk.E)
 
     def load_ape_file(self):
-        self.filename = fdialog.askopenfilename(title='Selecione um arquivo')
+        self.filename = fdialog.askopenfilename(title=_('Select a file'))
         assert self.filename
         self.show_annotations()
         return
@@ -125,7 +128,7 @@ class Application(object):
             self.ape_reader = ApeReader(self.filename)
         except RuntimeError:
             tk.messagebox.showerror(
-                'Formato inválido', 'Formato de arquivo inválido')
+                _('Invalid format'), _('Invalid file format'))
         else:
             self.cur_line = self.ape_reader.cur_line
             if self.cur_line < 0:
@@ -138,7 +141,8 @@ class Application(object):
             word_col = list()
             for i in self.ape_reader.error_lines[self.cur_line][0]:
                 if i > 0:
-                    words = ' '.join(self.ape_reader.src_lines[self.cur_line][:i])
+                    words = ' '.join(
+                        self.ape_reader.src_lines[self.cur_line][:i])
                     col = len(words)
                     if '"' in words:
                         col = col + 2 * words.count('"')
@@ -185,16 +189,17 @@ class Application(object):
                 self.cor_list.insert(tk.END, word[0])
                 self.cor_list.itemconfig(i, {'bg': word[1]})
 
-            self.sent_num.set('{}/{}'.format(self.ape_reader.cur_line + 1, len(self.ape_reader.src_lines)))
+            self.sent_num.set(
+                '{}/{}'.format(self.ape_reader.cur_line + 1, len(self.ape_reader.src_lines)))
 
     def annotate(self, event):
         if self.cur_line < 0:
             tk.messagebox.showerror(
-                'Abrir arquivo', 'É necessário abrir um arquivo')
+                _('Open file'), _('It is necessary to open a file'))
         else:
             if not self.cor_list.curselection():
                 tk.messagebox.showerror(
-                    'Selecione algo', 'Selecione uma palavra para anotar')
+                    _('Select something'), _('Select a word to annotate'))
             else:
                 self.ape_reader.cur_line = self.cur_line
                 if event.widget.message == 'CORRETO':
@@ -218,7 +223,7 @@ class Application(object):
     def next_line(self, event):
         if self.cur_line < 0:
             tk.messagebox.showerror(
-                'Abrir arquivo', 'É necessário abrir um arquivo')
+                _('Open file'), _('It is necessary to open a file'))
         else:
             if event.widget.message == 'PROXIMO' and self.cur_line < len(self.ape_reader.src_lines) - 1:
                 self.cur_line = self.cur_line + 1
