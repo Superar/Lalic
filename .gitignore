@@ -143,10 +143,7 @@ formata-mteval-v14.pl
 BOO/
 
 # Post Editing
-post_editing/resultados/
-post_editing/*incTrWord*
-post_editing/vectors*.txt
-post_editing/*truecased*
+post-editing/
 
 # Word Embeddings
 word_embeddings/models/
