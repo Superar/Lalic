@@ -9,7 +9,6 @@ from readers.read_blast import BlastReader
 from readers.read_muse_embeds import load_embeddings, MuseReader
 from post_edit import PostEditor
 
-_ = gettext.gettext
 
 class PostEditWindow(object):
 
@@ -20,7 +19,8 @@ class PostEditWindow(object):
         self.blast_widget.grid(row=0, column=0, pady=10, padx=10)
 
         # BLAST
-        self.blast_path_label = tk.Label(self.blast_widget, text=_('BLAST file'))
+        self.blast_path_label = tk.Label(
+            self.blast_widget, text=_('BLAST file'))
         self.blast_path_label.grid(row=0, column=0, sticky=tk.W)
         self.blast_path_text = tk.Text(self.blast_widget, height=1)
         self.blast_path_text.config(state=tk.DISABLED)
@@ -31,7 +31,8 @@ class PostEditWindow(object):
         self.blast_path_button.grid(row=0, column=2)
 
         # EN
-        self.en_path_label = tk.Label(self.blast_widget, text=_('Embeddings EN'))
+        self.en_path_label = tk.Label(
+            self.blast_widget, text=_('Embeddings EN'))
         self.en_path_label.grid(row=1, column=0, sticky=tk.W)
         self.en_path_text = tk.Text(self.blast_widget, height=1)
         self.en_path_text.config(state=tk.DISABLED)
@@ -42,7 +43,8 @@ class PostEditWindow(object):
         self.en_path_button.grid(row=1, column=2)
 
         # PT
-        self.pt_path_label = tk.Label(self.blast_widget, text=_('Embeddings PT'))
+        self.pt_path_label = tk.Label(
+            self.blast_widget, text=_('Embeddings PT'))
         self.pt_path_label.grid(row=2, column=0, sticky=tk.W)
         self.pt_path_text = tk.Text(self.blast_widget, height=1)
         self.pt_path_text.config(state=tk.DISABLED)
@@ -113,7 +115,8 @@ class PostEditWindow(object):
     def close_window_callback(self):
         self.cancel_ape_callback()
         self.should_close = True
-        self.running_threads = [thread for thread in self.running_threads if thread.is_alive()]
+        self.running_threads = [
+            thread for thread in self.running_threads if thread.is_alive()]
         if not self.running_threads:
             self.blast_window.destroy()
         else:

@@ -1,0 +1,141 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"POT-Creation-Date: 2018-05-25 20:33-0300\n"
+"PO-Revision-Date: 2018-05-25 20:39-0300\n"
+"Last-Translator: Marcio Lima <Superar>\n"
+"Language-Team: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: src/ape_window.py:23
+msgid "BLAST file"
+msgstr ""
+
+#: src/ape_window.py:28 src/ape_window.py:39 src/ape_window.py:50
+msgid "Select"
+msgstr ""
+
+#: src/ape_window.py:34
+msgid "Embeddings EN"
+msgstr ""
+
+#: src/ape_window.py:45
+msgid "Embeddings PT"
+msgstr ""
+
+#: src/ape_window.py:58
+msgid "Error type"
+msgstr ""
+
+#: src/ape_window.py:67
+msgid "Done"
+msgstr ""
+
+#: src/ape_window.py:70 src/ape_window.py:73
+msgid "Cancel"
+msgstr ""
+
+#: src/ape_window.py:91 src/main.py:118
+msgid "Select a file"
+msgstr ""
+
+#: src/ape_window.py:135 src/ape_window.py:167
+msgid "It is necessary to select all files."
+msgstr ""
+
+#: src/ape_window.py:135 src/ape_window.py:167
+msgid "Select files"
+msgstr ""
+
+#: src/ape_window.py:142
+msgid "MUSE file for English Embeddings not found."
+msgstr ""
+
+#: src/ape_window.py:142 src/ape_window.py:149 src/ape_window.py:173
+msgid "File not found"
+msgstr ""
+
+#: src/ape_window.py:149
+msgid "MUSE file for Portuguese Embeddings not fund."
+msgstr ""
+
+#: src/ape_window.py:173
+msgid "BLAST file not found."
+msgstr ""
+
+#: src/ape_window.py:209
+msgid "File saved as: "
+msgstr ""
+
+#: src/ape_window.py:209
+msgid "Saved"
+msgstr ""
+
+#: src/main.py:21
+msgid "Automatic Post-Editing"
+msgstr ""
+
+#: src/main.py:29 src/main.py:33
+msgid "Open"
+msgstr ""
+
+#: src/main.py:30
+msgid "APE"
+msgstr ""
+
+#: src/main.py:80
+msgid "Correct"
+msgstr ""
+
+#: src/main.py:85
+msgid "Partially correct"
+msgstr ""
+
+#: src/main.py:90
+msgid "Wrong"
+msgstr ""
+
+#: src/main.py:95
+msgid "Ignore"
+msgstr ""
+
+#: src/main.py:102
+msgid "Previous"
+msgstr ""
+
+#: src/main.py:106
+msgid "Next"
+msgstr ""
+
+#: src/main.py:130
+msgid "Invalid file format"
+msgstr ""
+
+#: src/main.py:130
+msgid "Invalid format"
+msgstr ""
+
+#: src/main.py:197 src/main.py:225
+msgid "It is necessary to open a file"
+msgstr ""
+
+#: src/main.py:197 src/main.py:225
+msgid "Open file"
+msgstr ""
+
+#: src/main.py:201
+msgid "Select a word to annotate"
+msgstr ""
+
+#: src/main.py:201
+msgid "Select something"
+msgstr ""
+
