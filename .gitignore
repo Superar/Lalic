@@ -138,6 +138,7 @@ translate.py
 mteval-v14.pl
 formata-mteval-v14.pl
 *.bleu
+*.dict
 
 # BOO
 BOO/
