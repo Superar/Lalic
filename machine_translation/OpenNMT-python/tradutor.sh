@@ -33,11 +33,6 @@ if [ ! -f multi-bleu.perl ]; then
     wget https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/generic/multi-bleu.perl;
 fi
 
-# Substitui `` e '' por ""
-echo "Substituindo aspas"
-# sed -i "s/\`\`/\"/g" $TRAIN_PATH/*.en
-# sed -i "s/''/\"/g" $TRAIN_PATH/*.en
-
 # Tokeniza textos
 echo "Tokenizando textos"
 for l in $SRC_LAN $TGT_LAN
@@ -45,6 +40,10 @@ do
     for f in $TRAIN_PATH/*.$l
     do
         if [ ! -f $f.atok ]; then
+            sed -i "s/\`\`/\"/g" $f
+            sed -i "s/\`/'/g" $f
+            sed -i "s/''/\"/g" $f
+            sed -i "s/--/-/g" $f
             perl tokenizer.perl -a -no-escape -l $l -q  < $f > $f.atok;
         fi
     done
@@ -52,6 +51,10 @@ do
     for f in $TEST_PATH/*.$l
     do
         if [ ! -f $f.atok ]; then
+            sed -i "s/\`\`/\"/g" $f
+            sed -i "s/\`/'/g" $f
+            sed -i "s/''/\"/g" $f
+            sed -i "s/--/-/g" $f
             perl tokenizer.perl -a -no-escape -l $l -q < $f > $f.atok;
         fi
     done
