@@ -1,7 +1,7 @@
 # pylint: disable=C0111
 from word_embeddings import WordEmbeddings
 from gensim.models import Word2Vec
-from gensim.models.word2vec import KeyedVectors
+from gensim.models import KeyedVectors
 import matplotlib.pyplot as plt
 
 
@@ -19,20 +19,20 @@ class Word2VecModel(WordEmbeddings):
 
         self.sentences = WordEmbeddings.process_sentences(lang, corpus_path)
 
-        model_word2vec = Word2Vec(self.sentences, size=dim)
+        model_word2vec = Word2Vec(self.sentences, size=dim, sg=1)
         # As embeddings serao salvas em ``modelo``
-        self.model = model_word2vec.wv
+        self.model = model_word2vec
         del model_word2vec
 
     def save(self, filename='model_word2vec.txt'):
         ''' Salva o modelo em ``filename`` '''
 
-        self.model.save_word2vec_format(filename)
+        self.model.save(filename)
 
     def load(self, filename='model_word2vec.txt'):
         ''' Carrega modelo salvo em ``filename`` '''
 
-        self.model = KeyedVectors.load_word2vec_format(filename)
+        self.model = Word2Vec.load(filename)
 
     def plot(self, filename='word_embeddings_word2vec.png', num_points=500, figsize=(18, 18)):
         ''' Traca o grafico com os vetores das palavras.
@@ -40,9 +40,9 @@ class Word2VecModel(WordEmbeddings):
         para um espaco de 2 dimensoes. '''
 
         # Usa t-SNE para fazer as projecoes
-        data_labels = [word.encode('utf-8') for word in self.model.index2word[:num_points]]
-        plot_vectors = [self.model[word]
-                        for word in self.model.index2word[:num_points]]
+        data_labels = [word.encode('utf-8') for word in self.model.wv.index2word[:num_points]]
+        plot_vectors = [self.model.wv[word]
+                        for word in self.model.wv.index2word[:num_points]]
         data = dict(zip(data_labels, plot_vectors))
 
         # Plot
@@ -60,12 +60,12 @@ class Word2VecModel(WordEmbeddings):
 
         word = word.decode('utf8')
 
-        plot_vectors = [self.model[word]]
+        plot_vectors = [self.model.wv[word]]
         data_label = [word.encode('utf-8')]
 
-        for (_word, _) in self.model.most_similar(positive=[word],
+        for (_word, _) in self.model.wv.most_similar(positive=[word],
                                                   topn=num_neighbours):
-            plot_vectors.append(self.model[_word])
+            plot_vectors.append(self.model.wv[_word])
             data_label.append(_word.encode('utf-8'))
 
         ref = plot_vectors[0]
@@ -79,7 +79,7 @@ class Word2VecModel(WordEmbeddings):
 
     def get_most_similar_word(self, word):
         try:
-            closest_word = self.model.most_similar(positive=[word],
+            closest_word = self.model.wv.most_similar(positive=[word],
                                         topn=1)[0][0]
         except KeyError:
             closest_word = '***'
