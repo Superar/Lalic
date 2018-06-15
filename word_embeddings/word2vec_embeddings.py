@@ -10,17 +10,17 @@ class Word2VecModel(WordEmbeddings):
         word2vec. As embeddings sao calculadas a partir de ``src_sentences``
     '''
 
-    def __init__(self):
+    def __init__(self, skipgram=False):
         WordEmbeddings.__init__(self)
         self.sentences = list()
+        self.sg = skipgram
 
     def train(self, lang, corpus_path, dim=100):
         ''' Treinamendo do modelo Word2Vec '''
 
         self.sentences = WordEmbeddings.process_sentences(lang, corpus_path)
 
-        model_word2vec = Word2Vec(self.sentences, size=dim, sg=1)
-        # As embeddings serao salvas em ``modelo``
+        model_word2vec = Word2Vec(self.sentences, size=dim, sg=self.sg)
         self.model = model_word2vec
         del model_word2vec
 
@@ -40,7 +40,8 @@ class Word2VecModel(WordEmbeddings):
         para um espaco de 2 dimensoes. '''
 
         # Usa t-SNE para fazer as projecoes
-        data_labels = [word.encode('utf-8') for word in self.model.wv.index2word[:num_points]]
+        data_labels = [word.encode('utf-8')
+                       for word in self.model.wv.index2word[:num_points]]
         plot_vectors = [self.model.wv[word]
                         for word in self.model.wv.index2word[:num_points]]
         data = dict(zip(data_labels, plot_vectors))
@@ -64,7 +65,7 @@ class Word2VecModel(WordEmbeddings):
         data_label = [word.encode('utf-8')]
 
         for (_word, _) in self.model.wv.most_similar(positive=[word],
-                                                  topn=num_neighbours):
+                                                     topn=num_neighbours):
             plot_vectors.append(self.model.wv[_word])
             data_label.append(_word.encode('utf-8'))
 
@@ -80,8 +81,8 @@ class Word2VecModel(WordEmbeddings):
     def get_most_similar_word(self, word):
         try:
             closest_word = self.model.wv.most_similar(positive=[word],
-                                        topn=1)[0][0]
+                                                      topn=1)[0][0]
         except KeyError:
             closest_word = '***'
-            
+
         return closest_word
